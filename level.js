@@ -1,22 +1,22 @@
-// Estrutura do mapa combinando com o fundo do Arquivo Central
+// Estrutura do mapa com obstáculos brancos
 const levelData = {
     platforms: [
-        // Chão do Arquivo (Tom escuro azulado para combinar com as sombras)
-        { x: 0, y: 550, width: 2000, height: 50, color: '#141d26' }, 
+        // Chão principal
+        { x: 0, y: 550, width: 2000, height: 50, color: 'white' }, 
         
-        // Mesas de Leitura (Madeira escura iluminada)
-        { x: 250, y: 450, width: 200, height: 20, color: '#4a3b2c' },
-        { x: 900, y: 420, width: 220, height: 20, color: '#4a3b2c' },
+        // Mesas de Leitura
+        { x: 250, y: 450, width: 200, height: 20, color: 'white' },
+        { x: 900, y: 420, width: 220, height: 20, color: 'white' },
         
-        // Arquivos de Aço Metálicos (Azul/Cinza escuro)
-        { x: 600, y: 350, width: 160, height: 30, color: '#293745' },
-        { x: 1250, y: 280, width: 140, height: 30, color: '#293745' },
+        // Arquivos de Aço
+        { x: 600, y: 350, width: 160, height: 30, color: 'white' },
+        { x: 1250, y: 280, width: 140, height: 30, color: 'white' },
         
-        // Prateleiras Superiores / Dutos (Metal escuro)
-        { x: 1500, y: 180, width: 150, height: 15, color: '#1c2630' },
+        // Prateleiras Superiores / Dutos
+        { x: 1500, y: 180, width: 150, height: 15, color: 'white' },
         
         // Pilha de caixas antigas
-        { x: 1650, y: 380, width: 80, height: 20, color: '#3d3024' }
+        { x: 1650, y: 380, width: 80, height: 20, color: 'white' }
     ],
     items: [
         { x: 340, y: 410, width: 20, height: 20, collected: false },  // Doc na Mesa 1
