@@ -1,9 +1,10 @@
 class Player {
     constructor(x, y) {
         this.x = x; this.y = y;
-        this.width = 30;   this.height = 72; // Colisão menor para ser mais fluido
+        this.width = 30;   
+        this.height = 72;  // Altura da gravidade
         this.vx = 0; this.vy = 0;
-        this.speed = 5; this.jumpForce = -16; this.gravity = 0.8;
+        this.speed = 5; this.jumpForce = -15.5; this.gravity = 0.8;
         this.grounded = false; this.facing = 1; this.invincible = false;
         this.image = new Image(); this.image.src = 'assets/sprites/arquivista.png';
         this.frameX = 0; this.frameY = 0; this.frameTimer = 0;
@@ -18,7 +19,6 @@ class Player {
 
         this.vy += this.gravity;
 
-        // Animação
         if (!this.grounded) this.frameY = 2;
         else if (this.vx !== 0) this.frameY = 1;
         else this.frameY = 0;
@@ -33,9 +33,12 @@ class Player {
         let sWidth = this.image.width / 4;
         let sHeight = this.image.height / 3;
         ctx.save();
-        // O ajuste -20 e -15 remove a flutuação da imagem transparente
-        let drawX = this.x - cameraX - 18;
-        let drawY = this.y - 12;
+        
+        // CÁLCULO EXATO PARA FIM DA FLUTUAÇÃO:
+        // A altura da imagem desenhada é 85, mas a física é 72. O "-13" faz os fundos alinharem.
+        let drawX = this.x - cameraX - 17;
+        let drawY = this.y - 13; 
+        
         if (this.facing === -1) {
             ctx.scale(-1, 1);
             ctx.drawImage(this.image, this.frameX * sWidth, this.frameY * sHeight, sWidth, sHeight, -(drawX + 64), drawY, 64, 85);
