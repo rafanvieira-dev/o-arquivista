@@ -1,7 +1,7 @@
 class Player {
     constructor(x, y) {
         this.x = x; this.y = y;
-        this.width = 32;   this.height = 70; // Caixa de colisão pequena e precisa
+        this.width = 30;   this.height = 72; // Colisão menor para ser mais fluido
         this.vx = 0; this.vy = 0;
         this.speed = 5; this.jumpForce = -16; this.gravity = 0.8;
         this.grounded = false; this.facing = 1; this.invincible = false;
@@ -17,10 +17,8 @@ class Player {
         if (keys.up && this.grounded) { this.vy = this.jumpForce; this.grounded = false; }
 
         this.vy += this.gravity;
-        this.x += this.vx;
-        this.y += this.vy;
 
-        // Animação baseada no estado
+        // Animação
         if (!this.grounded) this.frameY = 2;
         else if (this.vx !== 0) this.frameY = 1;
         else this.frameY = 0;
@@ -35,9 +33,9 @@ class Player {
         let sWidth = this.image.width / 4;
         let sHeight = this.image.height / 3;
         ctx.save();
-        // O ajuste -20 no X e -15 no Y "afunda" o desenho na colisão para os pés tocarem o chão
+        // O ajuste -20 e -15 remove a flutuação da imagem transparente
         let drawX = this.x - cameraX - 18;
-        let drawY = this.y - 15;
+        let drawY = this.y - 12;
         if (this.facing === -1) {
             ctx.scale(-1, 1);
             ctx.drawImage(this.image, this.frameX * sWidth, this.frameY * sHeight, sWidth, sHeight, -(drawX + 64), drawY, 64, 85);
