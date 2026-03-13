@@ -1,10 +1,10 @@
 class Enemy {
     constructor(x, y, patrolDistance) {
         this.startX = x;
+        this.startY = y; // Guarda a altura inicial para o reset
         this.x = x;
         this.y = y;
         
-        // Tamanho de 60x60 para o rato ficar com a proporção correta
         this.width = 60;
         this.height = 60; 
         
@@ -12,7 +12,6 @@ class Enemy {
         this.patrolDistance = patrolDistance;
         this.facing = 1;
 
-        // --- SISTEMA DE SPRITES ---
         this.image = new Image();
         this.image.src = 'assets/sprites/rato.png'; 
         
@@ -84,9 +83,14 @@ class Enemy {
     }
 }
 
-// Inicializando os inimigos da fase nas novas posições das estantes
+// Exército de Ratos para o novo Mega Nível
 const enemiesList = [
-    new Enemy(350, 505, 150), // Rato patrulhando o chão escuro
-    new Enemy(920, 375, 150), // Rato patrulhando a Mesa de Leitura 2
-    new Enemy(1250, 235, 100) // Rato patrulhando o Arquivo de Aço
+    new Enemy(350, 505, 150),  // Rato chão início
+    new Enemy(920, 375, 150),  // Rato mesa 1
+    new Enemy(1250, 235, 100), // Rato armário 1
+    new Enemy(1520, 135, 150), // Rato andaime 1
+    new Enemy(2050, 335, 100), // Rato armário 2
+    new Enemy(2370, 235, 150), // Rato andaime 2
+    new Enemy(2860, 355, 150), // Rato mesa 2
+    new Enemy(3520, 405, 150)  // Rato mesa final
 ];
