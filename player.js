@@ -1,107 +1,51 @@
 class Player {
     constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        
-        this.width = 64;  
-        this.height = 85; 
-        
-        // Físicas (Mais ágeis e menos "flutuantes")
-        this.vx = 0;
-        this.vy = 0;
-        this.speed = 5;       
-        this.runSpeed = 8;    
-        this.jumpForce = -15; 
-        this.gravity = 0.8;   
-        this.grounded = false;
-        
-        this.facing = 1; 
+        this.x = x; this.y = y;
+        this.width = 45;   // Largura da colisão
+        this.height = 78;  // Altura da colisão (ajustado para não flutuar)
+        this.vx = 0; this.vy = 0;
+        this.speed = 5; this.jumpForce = -16; this.gravity = 0.9;
+        this.grounded = false; this.facing = 1; this.invincible = false;
 
         this.image = new Image();
-        this.image.src = 'assets/sprites/arquivista.png'; 
-        
-        this.frameX = 0; 
-        this.frameY = 0; 
-        this.maxFrame = 3; 
-        
-        this.fps = 8; 
-        this.frameInterval = 1000 / this.fps;
-        this.frameTimer = 0;
+        this.image.src = 'assets/sprites/arquivista.png';
+        this.frameX = 0; this.frameY = 0; this.maxFrame = 3;
+        this.frameTimer = 0; this.frameInterval = 1000/12;
     }
 
     update(keys, deltaTime) {
-        let currentSpeed = keys.shift ? this.runSpeed : this.speed;
-        
-        if (keys.left) {
-            this.vx = -currentSpeed;
-            this.facing = -1;
-        } else if (keys.right) {
-            this.vx = currentSpeed;
-            this.facing = 1; 
-        } else {
-            this.vx = 0;
-        }
+        if (keys.left) { this.vx = -this.speed; this.facing = -1; }
+        else if (keys.right) { this.vx = this.speed; this.facing = 1; }
+        else { this.vx *= 0.85; }
 
-        if (keys.up && this.grounded) {
-            this.vy = this.jumpForce;
-            this.grounded = false;
-        }
+        if (keys.up && this.grounded) { this.vy = this.jumpForce; this.grounded = false; }
 
         this.vy += this.gravity;
         this.x += this.vx;
         this.y += this.vy;
 
-        this.grounded = false;
-
-        if (!this.grounded && this.vy !== 0) {
-            this.frameY = 2; 
-            this.maxFrame = 3;
-        } else if (this.vx !== 0) {
-            this.frameY = 1; 
-            this.maxFrame = 3;
-        } else {
-            this.frameY = 0; 
-            this.maxFrame = 2; 
-        }
+        if (this.grounded) {
+            if (Math.abs(this.vx) > 0.5) this.frameY = 1; else this.frameY = 0;
+        } else { this.frameY = 2; }
 
         if (this.frameTimer > this.frameInterval) {
-            if (this.frameX < this.maxFrame) {
-                this.frameX++;
-            } else {
-                this.frameX = 0;
-            }
+            this.frameX = (this.frameX + 1) % 4;
             this.frameTimer = 0;
-        } else {
-            this.frameTimer += deltaTime;
-        }
+        } else { this.frameTimer += deltaTime; }
     }
 
     draw(ctx, cameraX) {
-        if (this.image.width === 0) return;
-
-        let sWidth = this.image.width / 4;  
-        let sHeight = this.image.height / 3; 
-
-        let cropX = this.frameX * sWidth;
-        let cropY = this.frameY * sHeight;
-
+        if (this.invincible && Math.floor(Date.now() / 100) % 2) return;
+        let sWidth = this.image.width / 4;
+        let sHeight = this.image.height / 3;
         ctx.save();
-
+        // O ajuste "+5" e "-10" garante que a imagem cubra a caixa de colisão sem flutuar
         if (this.facing === -1) {
             ctx.scale(-1, 1);
-            ctx.drawImage(
-                this.image, 
-                cropX, cropY, sWidth, sHeight, 
-                -(this.x - cameraX + this.width), this.y, this.width, this.height
-            );
+            ctx.drawImage(this.image, this.frameX * sWidth, this.frameY * sHeight, sWidth, sHeight, -(this.x - cameraX + this.width + 12), this.y - 5, 70, 90);
         } else {
-            ctx.drawImage(
-                this.image, 
-                cropX, cropY, sWidth, sHeight, 
-                this.x - cameraX, this.y, this.width, this.height
-            );
+            ctx.drawImage(this.image, this.frameX * sWidth, this.frameY * sHeight, sWidth, sHeight, this.x - cameraX - 12, this.y - 5, 70, 90);
         }
-
         ctx.restore();
     }
 }
