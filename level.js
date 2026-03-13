@@ -1,11 +1,11 @@
 const levelData = {
     platforms: [
-        { x: 0, y: 0, width: 4000, height: 50, type: 'chao' }, 
-        { x: 400, y: 0, width: 150, height: 150, type: 'armario' },
-        { x: 700, y: 0, width: 200, height: 100, type: 'armario' },
-        { x: 1000, y: 0, width: 100, height: 250, type: 'escada' },
-        { x: 1300, y: 0, width: 300, height: 40, type: 'andaime' },
-        { x: 1800, y: 0, width: 150, height: 350, type: 'armario' }
+        { x: 0, y: 550, width: 4000, height: 50, type: 'chao' }, 
+        { x: 400, y: 551, width: 150, height: 150, type: 'armario' },
+        { x: 700, y: 551, width: 200, height: 100, type: 'armario' },
+        { x: 1000, y: 551, width: 100, height: 250, type: 'escada' },
+        { x: 1300, y: 551, width: 300, height: 40, type: 'andaime' },
+        { x: 1800, y: 551, width: 150, height: 350, type: 'armario' }
     ],
     items: [
         { x: 450, y: 350, width: 30, height: 30, collected: false },
