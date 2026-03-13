@@ -12,7 +12,7 @@ assets.chao.src = 'assets/sprites/chao.png';
 assets.arm.src = 'assets/sprites/armario.png';
 assets.doc.src = 'assets/sprites/documento.png';
 
-let player = new Player(100, 400);
+let player = new Player(100, 300);
 let cameraX = 0; let score = 0; let health = 3; let gameState = 'START';
 let timeLeft = 190; let timerAccumulator = 0; let lastTime = 0;
 const keys = { left: false, right: false, up: false };
@@ -30,7 +30,7 @@ window.addEventListener('keyup', e => {
 });
 
 function resetGame() {
-    player = new Player(100, 400);
+    player = new Player(100, 300);
     score = 0; health = 3; timeLeft = 190; gameState = 'PLAYING';
     scoreDisplay.innerText = `Documentos: ${score}`;
     healthDisplay.innerText = `Vidas: ${health}`;
@@ -38,33 +38,37 @@ function resetGame() {
     enemiesList.forEach(e => { e.x = e.startX; e.y = e.startY; e.vx = Math.abs(e.vx); });
 }
 
-function movePlayer() {
-    player.x += player.vx;
-    levelData.platforms.forEach(plat => {
-        if (isColliding(player, plat)) {
-            if (player.vx > 0) player.x = plat.x - player.width;
-            else if (player.vx < 0) player.x = plat.x + plat.width;
-        }
-    });
+function isColliding(a, b) {
+    return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
 
+// NOVA FÍSICA: Bloqueia a passagem lateral em paredes e o chão
+function movePlayer() {
+    // 1. Tenta mover no X e corrige
+    player.x += player.vx;
+    for (let plat of levelData.platforms) {
+        if (isColliding(player, plat)) {
+            if (player.vx > 0) { player.x = plat.x - player.width; }
+            else if (player.vx < 0) { player.x = plat.x + plat.width; }
+            player.vx = 0; // Bateu na parede, pára.
+        }
+    }
+
+    // 2. Tenta mover no Y e corrige
     player.y += player.vy;
     player.grounded = false;
-    levelData.platforms.forEach(plat => {
+    for (let plat of levelData.platforms) {
         if (isColliding(player, plat)) {
-            if (player.vy > 0) { 
+            if (player.vy > 0) { // Estava a cair (pisou no chão/armário)
                 player.y = plat.y - player.height;
                 player.vy = 0;
                 player.grounded = true;
-            } else if (player.vy < 0) { 
+            } else if (player.vy < 0) { // Bateu a cabeça no teto
                 player.y = plat.y + plat.height;
                 player.vy = 0;
             }
         }
-    });
-}
-
-function isColliding(a, b) {
-    return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+    }
 }
 
 function gameLoop(timeStamp) {
@@ -78,61 +82,61 @@ function gameLoop(timeStamp) {
         if (timeLeft <= 0) gameState = 'GAMEOVER';
 
         player.update(keys, deltaTime);
-        movePlayer(); 
+        movePlayer();
         enemiesList.forEach(e => e.update(deltaTime));
         checkGameplay();
 
-        cameraX = Math.max(0, Math.min(player.x - 350, 4400));
+        cameraX = Math.max(0, Math.min(player.x - 400, 4200));
 
         ctx.clearRect(0, 0, 800, 600);
         
+        // Fundo com scroll contínuo
         if (assets.bg.complete) {
             let bgScroll = (cameraX * 0.2) % 800;
             ctx.drawImage(assets.bg, -bgScroll, 0, 800, 600);
             ctx.drawImage(assets.bg, 800 - bgScroll, 0, 800, 600);
             ctx.drawImage(assets.bg, 1600 - bgScroll, 0, 800, 600); 
-            ctx.drawImage(assets.bg, 2400 - bgScroll, 0, 800, 600);
         }
 
-        // DESENHAR PORTAL FINAL
+        // Plataformas desenhadas perfeitamente
+        levelData.platforms.forEach(p => {
+            if (p.type === 'chao') {
+                if (assets.chao.complete) {
+                    for(let i=0; i<p.width; i+=200) ctx.drawImage(assets.chao, p.x+i-cameraX, p.y, 200, p.height);
+                } else { ctx.fillStyle = "#2c3e50"; ctx.fillRect(p.x - cameraX, p.y, p.width, p.height); }
+            } else { 
+                if (assets.arm.complete) {
+                    ctx.drawImage(assets.arm, p.x - cameraX, p.y, p.width, p.height);
+                } else { ctx.fillStyle = "#34495e"; ctx.fillRect(p.x - cameraX, p.y, p.width, p.height); }
+            }
+        });
+
+        // EFEITO DOS DOCUMENTOS: Piscar e Flutuar
+        let animTime = Date.now();
+        let floatY = Math.sin(animTime / 200) * 5; // Flutuação suave
+        
+        levelData.items.forEach(it => {
+            if (!it.collected) {
+                ctx.save();
+                ctx.globalAlpha = 0.5 + Math.abs(Math.sin(animTime / 150)) * 0.5; // Efeito Pisca-Pisca
+                if (assets.doc.complete) {
+                    ctx.drawImage(assets.doc, it.x - cameraX, it.y + floatY, it.width, it.height);
+                } else {
+                    ctx.fillStyle = "yellow"; ctx.fillRect(it.x - cameraX, it.y + floatY, it.width, it.height);
+                }
+                ctx.restore();
+            }
+        });
+
+        // Saída e Entidades
         let finish = levelData.finishLine;
         let pulse = Math.abs(Math.sin(Date.now() / 300)) * 0.5 + 0.3;
         ctx.fillStyle = `rgba(46, 204, 113, ${pulse})`; 
         ctx.fillRect(finish.x - cameraX, finish.y, finish.width, finish.height);
-        ctx.strokeStyle = "#2ecc71"; 
-        ctx.lineWidth = 4;
+        ctx.strokeStyle = "#2ecc71"; ctx.lineWidth = 4;
         ctx.strokeRect(finish.x - cameraX, finish.y, finish.width, finish.height);
-        ctx.fillStyle = "white";
-        ctx.font = "bold 20px Courier New";
-        ctx.textAlign = "center";
+        ctx.fillStyle = "white"; ctx.font = "bold 20px Courier New"; ctx.textAlign = "center";
         ctx.fillText("SAÍDA", finish.x - cameraX + finish.width/2, finish.y - 15);
-
-        // DESENHAR PLATAFORMAS (Sem margens de erro)
-        levelData.platforms.forEach(p => {
-            let img = p.type === 'chao' ? assets.chao : assets.arm;
-            if (img.complete) {
-                if (p.type === 'chao') {
-                    for(let i=0; i<p.width; i+=200) ctx.drawImage(img, p.x+i-cameraX, p.y, 200, p.height);
-                } else {
-                    ctx.drawImage(img, p.x-cameraX, p.y, p.width, p.height);
-                }
-            } else {
-                ctx.fillStyle = p.type === 'chao' ? "#1e272e" : "gray";
-                ctx.fillRect(p.x - cameraX, p.y, p.width, p.height);
-            }
-        });
-
-        // DESENHAR DOCUMENTOS 
-        let tempoAnimacao = Date.now();
-        let flutuacaoY = Math.sin(tempoAnimacao / 200) * 8; 
-        levelData.items.forEach(it => {
-            if (!it.collected && assets.doc.complete) {
-                ctx.save();
-                ctx.globalAlpha = 0.7 + Math.abs(Math.sin(tempoAnimacao / 150)) * 0.3; 
-                ctx.drawImage(assets.doc, it.x - cameraX, it.y + flutuacaoY, it.width, it.height);
-                ctx.restore();
-            }
-        });
 
         enemiesList.forEach(e => e.draw(ctx, cameraX));
         player.draw(ctx, cameraX);
@@ -169,5 +173,4 @@ function checkGameplay() {
     if (isColliding(player, levelData.finishLine)) gameState = 'WIN';
     if (player.y > 600) { health = 0; gameState = 'GAMEOVER'; }
 }
-
 requestAnimationFrame(gameLoop);
