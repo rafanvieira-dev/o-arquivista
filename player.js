@@ -1,35 +1,32 @@
 class Player {
     constructor(x, y) {
         this.x = x; this.y = y;
-        this.width = 40;   // Colisão mais estreita evita trancar nos cantos
-        this.height = 75;  // Altura real para pisar no chão
+        this.width = 40;   // Caixa de colisão real
+        this.height = 78;  
         this.vx = 0; this.vy = 0;
-        this.speed = 5; this.jumpForce = -16; this.gravity = 0.9;
+        this.speed = 5; this.jumpForce = -17; this.gravity = 0.9;
         this.grounded = false; this.facing = 1; this.invincible = false;
 
         this.image = new Image();
         this.image.src = 'assets/sprites/arquivista.png';
         this.frameX = 0; this.frameY = 0;
-        this.frameTimer = 0; this.frameInterval = 1000/10;
+        this.frameTimer = 0; this.frameInterval = 100;
     }
 
     update(keys, deltaTime) {
-        // Movimento lateral com resposta imediata
         if (keys.left) { this.vx = -this.speed; this.facing = -1; }
         else if (keys.right) { this.vx = this.speed; this.facing = 1; }
-        else { this.vx = 0; } // Parada brusca para melhor controle
+        else { this.vx = 0; }
 
-        // Pulo
         if (keys.up && this.grounded) { this.vy = this.jumpForce; this.grounded = false; }
 
         this.vy += this.gravity;
         this.x += this.vx;
         this.y += this.vy;
 
-        // Controle de Animação
-        if (!this.grounded) this.frameY = 2; // Ar
-        else if (this.vx !== 0) this.frameY = 1; // Correndo
-        else this.frameY = 0; // Parado
+        if (!this.grounded) this.frameY = 2;
+        else if (this.vx !== 0) this.frameY = 1;
+        else this.frameY = 0;
 
         this.frameTimer += deltaTime;
         if (this.frameTimer > this.frameInterval) {
@@ -43,9 +40,9 @@ class Player {
         let sWidth = this.image.width / 4;
         let sHeight = this.image.height / 3;
         ctx.save();
-        // Ajuste de desenho: -15 no Y para a imagem "encaixar" na colisão
+        // Ajuste de desenho para os pés tocarem a plataforma
         let drawX = this.x - cameraX - 15;
-        let drawY = this.y - 10;
+        let drawY = this.y - 12;
         
         if (this.facing === -1) {
             ctx.scale(-1, 1);
