@@ -1,25 +1,52 @@
 class Player {
     constructor(x, y) {
         this.x = x; this.y = y;
-        this.width = 30; this.height = 70; // Caixa física (Invisível)
+        this.width = 30;  this.height = 70; // Caixa de física enxuta para não trancar
         this.vx = 0; this.vy = 0;
-        this.speed = 5; this.jumpForce = -15; this.gravity = 0.8;
-        this.grounded = false; this.facing = 1; this.invincible = false;
+        this.speed = 5; this.jumpForce = -14; this.gravity = 0.8;
+        
+        this.grounded = false; 
+        this.facing = 1; 
+        this.invincible = false;
+
+        // SISTEMA DE DUPLO PULO
+        this.jumps = 0; 
+        this.maxJumps = 2;
+
         this.image = new Image(); this.image.src = 'assets/sprites/arquivista.png';
         this.frameX = 0; this.frameY = 0; this.frameTimer = 0;
     }
 
-    update(keys, deltaTime) {
+    update(keys, deltaTime, jumpJustPressed) {
+        // Horizontal
         if (keys.left) { this.vx = -this.speed; this.facing = -1; }
         else if (keys.right) { this.vx = this.speed; this.facing = 1; }
         else { this.vx = 0; }
 
-        if (keys.up && this.grounded) { this.vy = this.jumpForce; this.grounded = false; }
+        // Recarrega o pulo ao tocar no chão
+        if (this.grounded) {
+            this.jumps = 0; 
+        }
+
+        // LÓGICA DO PULO E DUPLO PULO (Ao Correr)
+        if (jumpJustPressed) {
+            if (this.grounded) {
+                this.vy = this.jumpForce;
+                this.grounded = false;
+                this.jumps = 1; // Deu o 1º pulo
+            } else if (this.jumps === 1 && Math.abs(this.vx) > 0) { 
+                // Se já deu 1 pulo e está a correr (vx > 0), pode dar o 2º pulo!
+                this.vy = this.jumpForce;
+                this.jumps = 2;
+            }
+        }
+
         this.vy += this.gravity;
 
-        if (!this.grounded) this.frameY = 2;
-        else if (this.vx !== 0) this.frameY = 1;
-        else this.frameY = 0;
+        // Animações
+        if (!this.grounded) this.frameY = 2; // Pulando
+        else if (this.vx !== 0) this.frameY = 1; // Correndo
+        else this.frameY = 0; // Parado
 
         this.frameTimer += deltaTime;
         if (this.frameTimer > 100) { this.frameX = (this.frameX + 1) % 4; this.frameTimer = 0; }
@@ -32,12 +59,10 @@ class Player {
         let sWidth = this.image.width / 4;
         let sHeight = this.image.height / 3;
         
-        // Tamanho do Desenho Vs Tamanho da Caixa de Física
+        // Desenha a imagem centralizada na caixa de física e alinhada pelos pés!
         let drawW = 60; let drawH = 80;
-        
-        // Centraliza e encosta a imagem ao fundo
         let drawX = this.x - cameraX - (drawW - this.width) / 2;
-        let drawY = this.y - (drawH - this.height);
+        let drawY = this.y - (drawH - this.height); // Sola do sapato toca exatamente na Hitbox
 
         ctx.save();
         if (this.facing === -1) {
