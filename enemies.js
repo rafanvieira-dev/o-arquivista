@@ -1,9 +1,9 @@
 class Enemy {
     constructor(x, y, patrolDistance) {
         this.startX = x; this.startY = y;
-        this.width = 50; this.height = 50; // Caixa física
+        this.width = 50; this.height = 50; 
         this.x = x; this.y = y; 
-        this.vx = 2; this.patrolDistance = patrolDistance;
+        this.vx = 2.5; this.patrolDistance = patrolDistance;
         this.facing = 1;
         this.image = new Image(); this.image.src = 'assets/sprites/rato.png';
         this.frameX = 0; this.frameTimer = 0;
@@ -24,7 +24,6 @@ class Enemy {
         let sWidth = this.image.width / 4;
         let sHeight = this.image.height / 4;
         
-        // Desenho ligeiramente maior para ficar assustador
         let drawW = 70; let drawH = 70; 
         let drawX = this.x - cameraX - (drawW - this.width) / 2;
         let drawY = this.y - (drawH - this.height);
@@ -41,9 +40,9 @@ class Enemy {
     }
 }
 
+// Ratos (No Chão = 500 - 50 = 450)
 const enemiesList = [
-    new Enemy(500, 500 - 50, 150),               // No chão principal
-    new Enemy(1450, 500 - 200 - 50, 100),        // Em cima do armário de 200 de altura
-    new Enemy(2000, 500 - 50, 150),              // No chão principal
-    new Enemy(2750, 500 - 100 - 50, 200)         // Em cima do armário de 100 de altura
+    new Enemy(600, 450, 150),
+    new Enemy(1450, 450, 100),
+    new Enemy(2200, 450, 200)
 ];
