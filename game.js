@@ -4,14 +4,12 @@ const ctx = canvas.getContext('2d');
 const scoreDisplay = document.getElementById('scoreDisplay');
 const healthDisplay = document.getElementById('healthDisplay');
 
-// Variáveis de Estado
 let player = new Player(50, 400);
 let cameraX = 0;
 let score = 0;
 let health = 3;
-let gameState = 'START'; // START, PLAYING, GAMEOVER, WIN
+let gameState = 'START';
 
-// Controles
 const keys = { left: false, right: false, up: false, shift: false, action: false };
 
 window.addEventListener('keydown', (e) => {
@@ -36,26 +34,21 @@ window.addEventListener('keyup', (e) => {
 });
 
 function checkCollisions() {
-    // Colisão com plataformas
     for (let plat of levelData.platforms) {
-        // Checa se as caixas delimitadoras (AABB) se sobrepõem
         if (player.x < plat.x + plat.width &&
             player.x + player.width > plat.x &&
             player.y < plat.y + plat.height &&
             player.y + player.height > plat.y) {
             
-            // Colisão por cima (caindo na plataforma)
             if (player.vy > 0 && player.y + player.height - player.vy <= plat.y + 10) {
                 player.grounded = true;
                 player.vy = 0;
                 player.y = plat.y - player.height;
             } 
-            // Bateu a cabeça
             else if (player.vy < 0 && player.y - player.vy >= plat.y + plat.height - 10) {
                 player.vy = 0;
                 player.y = plat.y + plat.height;
             }
-            // Colisão lateral
             else {
                 if (player.vx > 0) player.x = plat.x - player.width;
                 else if (player.vx < 0) player.x = plat.x + plat.width;
@@ -63,10 +56,8 @@ function checkCollisions() {
         }
     }
 
-    // Colisão com bordas da tela (esquerda)
     if (player.x < 0) player.x = 0;
 
-    // Colisão com a linha de chegada
     let finish = levelData.finishLine;
     if (player.x < finish.x + finish.width && player.x + player.width > finish.x &&
         player.y < finish.y + finish.height && player.y + player.height > finish.y) {
@@ -75,7 +66,6 @@ function checkCollisions() {
 }
 
 function checkItemsAndEnemies() {
-    // Coleta de itens
     for (let item of levelData.items) {
         if (!item.collected && 
             player.x < item.x + item.width && player.x + player.width > item.x &&
@@ -86,19 +76,16 @@ function checkItemsAndEnemies() {
         }
     }
 
-    // Colisão com inimigos
     for (let enemy of enemiesList) {
         if (player.x < enemy.x + enemy.width && player.x + player.width > enemy.x &&
             player.y < enemy.y + enemy.height && player.y + player.height > enemy.y) {
             
-            // Pulo em cima do inimigo (estilo Mario)
             if (player.vy > 0 && player.y + player.height - player.vy <= enemy.y + 10) {
-                enemy.y = 9999; // Move para fora da tela (derrotado)
-                player.vy = -8; // Pulo de ricochete
+                enemy.y = 9999; 
+                player.vy = -8; 
                 score += 5;
             } else {
-                // Sofre dano
-                player.x -= 50; // Empurra pra trás
+                player.x -= 50; 
                 player.vy = -5;
                 health -= 1;
                 healthDisplay.innerText = `Vidas: ${health}`;
@@ -127,7 +114,14 @@ function drawTextCenter(text, size, color, offset = 0) {
     ctx.fillText(text, canvas.width / 2, canvas.height / 2 + offset);
 }
 
-function gameLoop() {
+// Variável para calcular o tempo da animação
+let lastTime = 0;
+
+function gameLoop(timeStamp) {
+    // Calculando o deltaTime (tempo que passou desde o último frame)
+    let deltaTime = timeStamp - lastTime;
+    lastTime = timeStamp;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (gameState === 'START') {
@@ -145,52 +139,46 @@ function gameLoop() {
         drawTextCenter('Pressione ENTER para Jogar Novamente', 20, '#f1c40f', 70);
     }
     else if (gameState === 'PLAYING') {
-        player.update(keys);
+        // Passando o deltaTime para o player
+        player.update(keys, deltaTime);
         checkCollisions();
         
-        // Atualiza inimigos
         enemiesList.forEach(e => e.update());
         checkItemsAndEnemies();
 
-        // Câmera segue o jogador
         cameraX = player.x - canvas.width / 2 + player.width / 2;
-        if (cameraX < 0) cameraX = 0; // Impede a câmera de ir além do início da fase
-        if (cameraX > 2000 - canvas.width) cameraX = 2000 - canvas.width; // Limite do mapa
+        if (cameraX < 0) cameraX = 0; 
+        if (cameraX > 2000 - canvas.width) cameraX = 2000 - canvas.width; 
 
-        // Desenha plataformas
         for (let plat of levelData.platforms) {
             ctx.fillStyle = plat.color;
             ctx.fillRect(plat.x - cameraX, plat.y, plat.width, plat.height);
         }
 
-        // Desenha porta final
         let finish = levelData.finishLine;
-        ctx.fillStyle = '#27ae60'; // Porta verde
+        ctx.fillStyle = '#27ae60'; 
         ctx.fillRect(finish.x - cameraX, finish.y, finish.width, finish.height);
 
-        // Desenha itens
         for (let item of levelData.items) {
             if (!item.collected) {
-                ctx.fillStyle = '#f1c40f'; // Dourado (Documento)
+                ctx.fillStyle = '#f1c40f'; 
                 ctx.fillRect(item.x - cameraX, item.y, item.width, item.height);
             }
         }
 
-        // Desenha Inimigos
         enemiesList.forEach(e => e.draw(ctx, cameraX));
 
-        // Desenha Jogador
         player.draw(ctx, cameraX);
         
-        // Queda em buraco (Se houvesse buracos no chão)
         if (player.y > canvas.height) {
             health = 0;
             gameState = 'GAMEOVER';
         }
     }
 
+    // O requestAnimationFrame injeta automaticamente o timeStamp na função
     requestAnimationFrame(gameLoop);
 }
 
-// Inicia o loop
-gameLoop();
+// Inicia o loop (passando 0 como tempo inicial para evitar erros no primeiro frame)
+requestAnimationFrame(gameLoop);
