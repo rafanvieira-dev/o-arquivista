@@ -2,12 +2,11 @@ class Enemy {
     constructor(x, y, patrolDistance) {
         this.startX = x; this.startY = y;
         this.x = x; this.y = y;
-        this.width = 70; this.height = 70;
+        this.width = 50; this.height = 50;
         this.vx = 2; 
         this.patrolDistance = patrolDistance;
         this.facing = 1;
-        this.image = new Image();
-        this.image.src = 'assets/sprites/rato.png';
+        this.image = new Image(); this.image.src = 'assets/sprites/rato.png';
         this.frameX = 0; this.frameTimer = 0;
     }
 
@@ -28,7 +27,7 @@ class Enemy {
     draw(ctx, cameraX) {
         if (!this.image.complete) return;
         let sWidth = this.image.width / 4;
-        let sHeight = this.image.height / 4;
+        let sHeight = this.image.height / 4; // Rato é 4x4
         ctx.save();
         if (this.facing === -1) {
             ctx.scale(-1, 1);
@@ -41,7 +40,7 @@ class Enemy {
 }
 
 const enemiesList = [
-    new Enemy(450, 500, 200),
-    new Enemy(1400, 200, 150),
-    new Enemy(2600, 350, 200)
+    new Enemy(500, 500, 300),
+    new Enemy(1200, 500, 200),
+    new Enemy(2000, 500, 400)
 ];
