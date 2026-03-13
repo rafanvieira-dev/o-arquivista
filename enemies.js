@@ -85,11 +85,9 @@ class Enemy {
     }
 }
 
-// CORREÇÃO DA POSIÇÃO (Y): 
-// Como o rato agora tem 60 de altura, subimos a posição dele para ele ficar pisando certinho na estante.
-// O chão está em 550 (550 - 60 = 490) e a estante em 350 (350 - 60 = 290).
+// CORREÇÃO DA POSIÇÃO (Y) - Compensando o espaço transparente debaixo das patas
 const enemiesList = [
-    new Enemy(400, 490, 200), // Rato no chão
-    new Enemy(900, 490, 150), // Rato no chão
-    new Enemy(550, 290, 100)  // Rato na estante 
+    new Enemy(400, 505, 200), // Rato no chão (+15px para baixo)
+    new Enemy(900, 505, 150), // Rato no chão (+15px para baixo)
+    new Enemy(550, 305, 100)  // Rato na estante (+15px para baixo)
 ];
