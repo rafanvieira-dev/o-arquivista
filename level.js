@@ -1,30 +1,27 @@
 const levelData = {
     platforms: [
-        // Chão (Y=550) - Base de tudo
+        // Chão principal (Y=550)
         { x: 0, y: 550, width: 4000, height: 50, type: 'chao' }, 
         
-        // ZONA 1: Objetos com alturas variadas (Y + Height sempre = 550)
-        { x: 400, y: 430, width: 180, height: 120, type: 'armario' }, // Médio
-        { x: 800, y: 470, width: 150, height: 80, type: 'armario' },  // Baixo
-        { x: 1100, y: 350, width: 120, height: 200, type: 'escada' }, // Escada
+        // ARMÁRIOS DE VÁRIOS TAMANHOS (Sempre encostados no chão)
+        { x: 400, y: 300, width: 120, height: 250, type: 'armario' }, // Alto e estreito
+        { x: 750, y: 450, width: 220, height: 100, type: 'armario' }, // Baixo e largo
+        { x: 1200, y: 350, width: 150, height: 200, type: 'armario' }, // Proporção média
         
-        // ZONA 2: Estruturas no ar e armários altos
-        { x: 1400, y: 250, width: 140, height: 300, type: 'armario' }, 
-        { x: 1650, y: 320, width: 300, height: 40, type: 'andaime' },  
-        { x: 2100, y: 150, width: 100, height: 400, type: 'escada' },  
+        // ZONA 2: Estruturas elevadas
+        { x: 1550, y: 320, width: 300, height: 40, type: 'andaime' }, 
+        { x: 2000, y: 150, width: 100, height: 400, type: 'escada' },
+        { x: 2400, y: 380, width: 140, height: 170, type: 'armario' },
         
-        // ZONA 3: Reta final
-        { x: 2600, y: 400, width: 250, height: 150, type: 'andaime' },
-        { x: 3100, y: 300, width: 140, height: 250, type: 'armario' },
-        { x: 3500, y: 480, width: 200, height: 70, type: 'mesa' }
+        // ZONA 3: Desafio final
+        { x: 2800, y: 250, width: 250, height: 40, type: 'andaime' },
+        { x: 3300, y: 480, width: 200, height: 70, type: 'mesa' }
     ],
     items: [
-        { x: 470, y: 380, width: 35, height: 35, collected: false },
-        { x: 850, y: 420, width: 35, height: 35, collected: false },
-        { x: 1450, y: 200, width: 35, height: 35, collected: false },
-        { x: 1750, y: 270, width: 35, height: 35, collected: false },
-        { x: 2130, y: 100, width: 35, height: 35, collected: false },
-        { x: 3150, y: 250, width: 35, height: 35, collected: false }
+        { x: 450, y: 250, width: 35, height: 35, collected: false },
+        { x: 850, y: 400, width: 35, height: 35, collected: false },
+        { x: 1250, y: 300, width: 35, height: 35, collected: false },
+        { x: 3350, y: 430, width: 35, height: 35, collected: false }
     ],
     finishLine: { x: 3850, y: 450, width: 60, height: 100 }
 };
