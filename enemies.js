@@ -3,10 +3,9 @@ class Enemy {
         this.startX = x; this.startY = y;
         this.x = x; this.y = y;
         
-        // RATOS MAIORES E MAIS ASSUSTADORES
         this.width = 80; this.height = 80; 
         
-        this.vx = 2.5; // Ficaram ligeiramente mais rápidos
+        this.vx = 2.5; 
         this.patrolDistance = patrolDistance;
         this.facing = 1;
         this.image = new Image(); this.image.src = 'assets/sprites/rato.png';
@@ -34,7 +33,6 @@ class Enemy {
         ctx.save();
         if (this.facing === -1) {
             ctx.scale(-1, 1);
-            // Ajustado para desenhar o rato com o seu novo tamanho (80x80)
             ctx.drawImage(this.image, this.frameX * sWidth, 0, sWidth, sHeight, -(this.x - cameraX + this.width), this.y, this.width, this.height);
         } else {
             ctx.drawImage(this.image, this.frameX * sWidth, 0, sWidth, sHeight, this.x - cameraX, this.y, this.width, this.height);
@@ -43,9 +41,11 @@ class Enemy {
     }
 }
 
+// POSIÇÕES CORRIGIDAS: Ratos de altura 80 no chão de Y=550 ficam no Y=470!
 const enemiesList = [
-    new Enemy(600, 470, 100),  // Rato no chão
-    new Enemy(1400, 270, 150), // Rato no Andaime (350 - 80 = 270)
-    new Enemy(2000, 470, 200), // Rato no chão
-    new Enemy(2850, 470, 200)  // Rato no chão
+    new Enemy(600, 470, 100),  // Rato no chão 
+    new Enemy(800, 370, 150),  // Rato em cima do Armário 2 (450 - 80 = 370)
+    new Enemy(1400, 470, 150), // Rato no chão
+    new Enemy(2100, 320, 100), // Rato em cima do Armário 5 (400 - 80 = 320)
+    new Enemy(2800, 470, 150)  // Rato no chão
 ];
