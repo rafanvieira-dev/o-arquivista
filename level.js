@@ -1,17 +1,16 @@
 const levelData = {
     platforms: [
-        { x: 0, y: 550, width: 4000, height: 200, type: 'chao' }, 
-        { x: 0, y: 550, width: 140, height: 200, type: 'armario' },
-        { x: 0, y: 450, width: 180, height: 330, type: 'armario' },
-        { x: 0, y: 250, width: 100, height: 300, type: 'escada' },
-        { x: 0, y: 350, width: 300, height: 400, type: 'andaime' },
-        { x: 0, y: 200, width: 140, height: 600, type: 'armario' },
-        { x: 0, y: 300, width: 300, height: 500, type: 'andaime' }
+        { x: 0, y: 0, width: 4000, height: 50, type: 'chao' }, 
+        { x: 400, y: 0, width: 150, height: 150, type: 'armario' },
+        { x: 700, y: 0, width: 200, height: 100, type: 'armario' },
+        { x: 1000, y: 0, width: 100, height: 250, type: 'escada' },
+        { x: 1300, y: 0, width: 300, height: 40, type: 'andaime' },
+        { x: 1800, y: 0, width: 150, height: 350, type: 'armario' }
     ],
     items: [
-        { x: 450, y: 300, width: 35, height: 35, collected: false },
-        { x: 1130, y: 200, width: 35, height: 35, collected: false },
-        { x: 1500, y: 300, width: 35, height: 35, collected: false }
+        { x: 450, y: 350, width: 30, height: 30, collected: false },
+        { x: 1030, y: 250, width: 30, height: 30, collected: false },
+        { x: 1400, y: 300, width: 30, height: 30, collected: false }
     ],
-    finishLine: { x: 3850, y: 450, width: 60, height: 100 }
+    finishLine: { x: 3800, y: 450, width: 60, height: 100 }
 };
