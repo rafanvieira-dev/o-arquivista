@@ -4,14 +4,13 @@ class Enemy {
         this.x = x;
         this.y = y;
         
-        // Tamanho ajustado para ficar proporcional e "legal" no jogo
-        this.width = 70;
-        this.height = 70;
+        // CORREÇÃO DO ACHATAMENTO:
+        // Como o corte da imagem é um quadrado, a largura e altura no jogo também têm de ser iguais!
+        this.width = 60;
+        this.height = 60; 
         
-        this.vx = 2; // Velocidade de patrulha
+        this.vx = 2; 
         this.patrolDistance = patrolDistance;
-        
-        // Direção em que o rato está virado (1 = direita, -1 = esquerda)
         this.facing = 1;
 
         // --- SISTEMA DE SPRITES ---
@@ -19,10 +18,9 @@ class Enemy {
         this.image.src = 'assets/sprites/rato.png'; 
         
         this.frameX = 0; 
-        this.frameY = 0; // Todas as linhas desta imagem são de movimento, usamos a primeira
-        this.maxFrame = 3; // A nova imagem tem 4 colunas perfeitamente alinhadas (0 a 3)
+        this.frameY = 0; 
+        this.maxFrame = 3; 
         
-        // Controle de tempo da animação (aumentei um pouco para ele correr mais frenético)
         this.fps = 15; 
         this.frameInterval = 1000 / this.fps;
         this.frameTimer = 0;
@@ -31,16 +29,14 @@ class Enemy {
     update(deltaTime) {
         this.x += this.vx;
         
-        // Inverte a direção se atingir o limite da patrulha
         if (this.x > this.startX + this.patrolDistance) {
             this.vx *= -1;
-            this.facing = -1; // Vira o rato para a esquerda
+            this.facing = -1; 
         } else if (this.x < this.startX) {
             this.vx *= -1;
-            this.facing = 1;  // Vira o rato para a direita
+            this.facing = 1;  
         }
 
-        // --- AVANÇAR OS FRAMES DA ANIMAÇÃO ---
         let time = deltaTime || 16; 
         
         if (this.frameTimer > this.frameInterval) {
@@ -62,7 +58,6 @@ class Enemy {
             return;
         }
 
-        // CÁLCULO PERFEITO: Voltamos à divisão exata por 4 colunas e 4 linhas
         let sWidth = this.image.naturalWidth / 4;  
         let sHeight = this.image.naturalHeight / 4; 
 
@@ -72,7 +67,6 @@ class Enemy {
         ctx.save();
 
         if (this.facing === -1) {
-            // Vira o rato para a esquerda
             ctx.scale(-1, 1);
             ctx.drawImage(
                 this.image, 
@@ -80,7 +74,6 @@ class Enemy {
                 -(this.x - cameraX + this.width), this.y, this.width, this.height
             );
         } else {
-            // Desenha o rato normalmente (virado para a direita)
             ctx.drawImage(
                 this.image, 
                 cropX, cropY, sWidth, sHeight, 
@@ -92,9 +85,11 @@ class Enemy {
     }
 }
 
-// Inicializando os inimigos da fase
+// CORREÇÃO DA POSIÇÃO (Y): 
+// Como o rato agora tem 60 de altura, subimos a posição dele para ele ficar pisando certinho na estante.
+// O chão está em 550 (550 - 60 = 490) e a estante em 350 (350 - 60 = 290).
 const enemiesList = [
-    new Enemy(400, 530, 200), // Rato no chão
-    new Enemy(900, 530, 150), // Rato no chão
-    new Enemy(550, 330, 100)  // Rato na estante 
+    new Enemy(400, 490, 200), // Rato no chão
+    new Enemy(900, 490, 150), // Rato no chão
+    new Enemy(550, 290, 100)  // Rato na estante 
 ];
