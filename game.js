@@ -3,16 +3,25 @@ const ctx = canvas.getContext('2d');
 
 const scoreDisplay = document.getElementById('scoreDisplay');
 const healthDisplay = document.getElementById('healthDisplay');
+const timerDisplay = document.getElementById('timerDisplay'); 
 
-// Carregar o novo fundo
-const bgImage = new Image();
-bgImage.src = 'assets/sprites/fundo.png';
+// --- CARREGAMENTO DE IMAGENS ---
+const bgImage = new Image(); bgImage.src = 'assets/sprites/fundo.png';
+const armarioImg = new Image(); armarioImg.src = 'assets/sprites/armario.png'; 
+const escadaImg = new Image(); escadaImg.src = 'assets/sprites/escada.png';
+const andaimeImg = new Image(); andaimeImg.src = 'assets/sprites/andaime.png';
+const docImg = new Image(); docImg.src = 'assets/sprites/documentos.png';
+const chaoImg = new Image(); chaoImg.src = 'assets/sprites/chao.png'; 
 
 let player = new Player(50, 400);
 let cameraX = 0;
 let score = 0;
 let health = 3;
 let gameState = 'START';
+
+// Variáveis do Temporizador
+let timeLeft = 190;
+let timerAccumulator = 0;
 
 const keys = { left: false, right: false, up: false, shift: false, action: false };
 
@@ -21,7 +30,6 @@ window.addEventListener('keydown', (e) => {
     if (e.code === 'ArrowRight') keys.right = true;
     if (e.code === 'Space') keys.up = true;
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') keys.shift = true;
-    if (e.code === 'KeyE') keys.action = true;
     
     if (e.code === 'Enter' && gameState !== 'PLAYING') {
         resetGame();
@@ -34,7 +42,6 @@ window.addEventListener('keyup', (e) => {
     if (e.code === 'ArrowRight') keys.right = false;
     if (e.code === 'Space') keys.up = false;
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') keys.shift = false;
-    if (e.code === 'KeyE') keys.action = false;
 });
 
 function checkCollisions() {
@@ -103,14 +110,21 @@ function resetGame() {
     player = new Player(50, 400);
     score = 0;
     health = 3;
+    timeLeft = 190; 
+    timerAccumulator = 0;
+    
     scoreDisplay.innerText = `Documentos: ${score}`;
     healthDisplay.innerText = `Vidas: ${health}`;
+    timerDisplay.innerText = `Tempo: ${timeLeft}`;
+    
     levelData.items.forEach(i => i.collected = false);
     
-    // Volta a colocar os ratos nas posições novas
-    enemiesList[0].x = enemiesList[0].startX; enemiesList[0].y = 505; // Rato do chão
-    enemiesList[1].x = enemiesList[1].startX; enemiesList[1].y = 375; // Rato da mesa
-    enemiesList[2].x = enemiesList[2].startX; enemiesList[2].y = 235; // Rato do arquivo
+    enemiesList.forEach(e => {
+        e.x = e.startX;
+        e.y = e.startY;
+        e.vx = Math.abs(e.vx); 
+        e.facing = 1;
+    });
 }
 
 function drawTextCenter(text, size, color, offset = 0) {
@@ -126,24 +140,34 @@ function gameLoop(timeStamp) {
     let deltaTime = timeStamp - lastTime;
     lastTime = timeStamp;
 
-    // Limpa o ecrã
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (gameState === 'START') {
         drawTextCenter('O ARQUIVISTA', 50, 'white', -40);
         drawTextCenter('Pressione ENTER para Começar', 20, '#f1c40f', 20);
-        drawTextCenter('Setas p/ Mover | Espaço p/ Pular | Shift p/ Correr', 16, '#bdc3c7', 60);
+        drawTextCenter('Cuidado com o tempo e com os ratos!', 16, '#bdc3c7', 60);
     } 
     else if (gameState === 'GAMEOVER') {
-        drawTextCenter('FIM DE JOGO', 50, '#e74c3c', -20);
+        drawTextCenter(timeLeft <= 0 ? 'O TEMPO ESGOTOU!' : 'FIM DE JOGO', 50, '#e74c3c', -20);
         drawTextCenter('Pressione ENTER para Tentar Novamente', 20, 'white', 30);
     }
     else if (gameState === 'WIN') {
         drawTextCenter('ARQUIVO SALVO!', 50, '#2ecc71', -20);
-        drawTextCenter(`Pontuação Final: ${score}`, 25, 'white', 30);
+        drawTextCenter(`Pontuação: ${score} | Tempo Restante: ${timeLeft}s`, 25, 'white', 30);
         drawTextCenter('Pressione ENTER para Jogar Novamente', 20, '#f1c40f', 70);
     }
     else if (gameState === 'PLAYING') {
+        // --- LÓGICA DO TEMPO ---
+        timerAccumulator += deltaTime;
+        if (timerAccumulator >= 1000) { 
+            timeLeft--;
+            timerDisplay.innerText = `Tempo: ${timeLeft}`;
+            timerAccumulator -= 1000;
+            if (timeLeft <= 0) {
+                gameState = 'GAMEOVER';
+            }
+        }
+
         player.update(keys, deltaTime);
         checkCollisions();
         
@@ -152,22 +176,40 @@ function gameLoop(timeStamp) {
 
         cameraX = player.x - canvas.width / 2 + player.width / 2;
         if (cameraX < 0) cameraX = 0; 
-        if (cameraX > 2000 - canvas.width) cameraX = 2000 - canvas.width; 
+        if (cameraX > 4000 - canvas.width) cameraX = 4000 - canvas.width; // 4000 limite de mapa
 
-        // --- SISTEMA DE FUNDO PARALLAX ---
         if (bgImage.complete && bgImage.naturalWidth > 0) {
-            // O fundo move-se a 30% da velocidade da câmara para dar sensação de distância
             let bgScroll = (cameraX * 0.3) % canvas.width;
-            
-            // Desenha o fundo duas vezes lado a lado para o efeito de "loop" contínuo
             ctx.drawImage(bgImage, -bgScroll, 0, canvas.width, canvas.height);
             ctx.drawImage(bgImage, canvas.width - bgScroll, 0, canvas.width, canvas.height);
         }
 
-        // --- DESENHO DOS OBSTÁCULOS E INIMIGOS ---
         for (let plat of levelData.platforms) {
-            ctx.fillStyle = plat.color;
-            ctx.fillRect(plat.x - cameraX, plat.y, plat.width, plat.height);
+            let drawn = false;
+            
+            // Lógica para repetir o piso
+            if (plat.type === 'chao' && chaoImg.complete && chaoImg.naturalWidth > 0) {
+                for(let i = 0; i < plat.width; i += chaoImg.naturalWidth) {
+                    let drawWidth = Math.min(chaoImg.naturalWidth, plat.width - i);
+                    ctx.drawImage(chaoImg, 0, 0, drawWidth, chaoImg.naturalHeight, plat.x + i - cameraX, plat.y, drawWidth, plat.height);
+                }
+                drawn = true;
+            } 
+            else if (plat.type === 'armario' && armarioImg.complete && armarioImg.naturalWidth > 0) {
+                ctx.drawImage(armarioImg, plat.x - cameraX, plat.y, plat.width, plat.height);
+                drawn = true;
+            } else if (plat.type === 'escada' && escadaImg.complete && escadaImg.naturalWidth > 0) {
+                ctx.drawImage(escadaImg, plat.x - cameraX, plat.y, plat.width, plat.height);
+                drawn = true;
+            } else if (plat.type === 'andaime' && andaimeImg.complete && andaimeImg.naturalWidth > 0) {
+                ctx.drawImage(andaimeImg, plat.x - cameraX, plat.y, plat.width, plat.height);
+                drawn = true;
+            }
+
+            if (!drawn) {
+                ctx.fillStyle = plat.color;
+                ctx.fillRect(plat.x - cameraX, plat.y, plat.width, plat.height);
+            }
         }
 
         let finish = levelData.finishLine;
@@ -176,8 +218,12 @@ function gameLoop(timeStamp) {
 
         for (let item of levelData.items) {
             if (!item.collected) {
-                ctx.fillStyle = '#f1c40f'; 
-                ctx.fillRect(item.x - cameraX, item.y, item.width, item.height);
+                if (docImg.complete && docImg.naturalWidth > 0) {
+                    ctx.drawImage(docImg, item.x - cameraX, item.y, item.width, item.height);
+                } else {
+                    ctx.fillStyle = '#f1c40f'; 
+                    ctx.fillRect(item.x - cameraX, item.y, item.width, item.height);
+                }
             }
         }
 
