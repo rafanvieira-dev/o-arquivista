@@ -107,10 +107,10 @@ function resetGame() {
     healthDisplay.innerText = `Vidas: ${health}`;
     levelData.items.forEach(i => i.collected = false);
     
-    // Volta a colocar os ratos nas posições corrigidas
-    enemiesList[0].x = enemiesList[0].startX; enemiesList[0].y = 505;
-    enemiesList[1].x = enemiesList[1].startX; enemiesList[1].y = 505;
-    enemiesList[2].x = enemiesList[2].startX; enemiesList[2].y = 305;
+    // Volta a colocar os ratos nas posições novas
+    enemiesList[0].x = enemiesList[0].startX; enemiesList[0].y = 505; // Rato do chão
+    enemiesList[1].x = enemiesList[1].startX; enemiesList[1].y = 375; // Rato da mesa
+    enemiesList[2].x = enemiesList[2].startX; enemiesList[2].y = 235; // Rato do arquivo
 }
 
 function drawTextCenter(text, size, color, offset = 0) {
@@ -126,7 +126,7 @@ function gameLoop(timeStamp) {
     let deltaTime = timeStamp - lastTime;
     lastTime = timeStamp;
 
-    // Apenas limpa o ecrã com a cor base
+    // Limpa o ecrã
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (gameState === 'START') {
