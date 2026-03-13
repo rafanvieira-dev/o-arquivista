@@ -5,14 +5,11 @@ const healthDisplay = document.getElementById('healthDisplay');
 const timerDisplay = document.getElementById('timerDisplay');
 
 const assets = {
-    bg: new Image(), chao: new Image(), arm: new Image(), 
-    esc: new Image(), and: new Image(), doc: new Image()
+    bg: new Image(), chao: new Image(), arm: new Image(), doc: new Image()
 };
 assets.bg.src = 'assets/sprites/fundo.png';
 assets.chao.src = 'assets/sprites/chao.png';
 assets.arm.src = 'assets/sprites/armario.png';
-assets.esc.src = 'assets/sprites/escada.png';
-assets.and.src = 'assets/sprites/andaime.png';
 assets.doc.src = 'assets/sprites/documento.png';
 
 let player = new Player(100, 400);
@@ -85,12 +82,10 @@ function gameLoop(timeStamp) {
         enemiesList.forEach(e => e.update(deltaTime));
         checkGameplay();
 
-        // O limite da câmera aumentou para suportar a fase maior
         cameraX = Math.max(0, Math.min(player.x - 350, 4400));
 
         ctx.clearRect(0, 0, 800, 600);
         
-        // CORREÇÃO DO FUNDO: Adicionada uma 3ª e 4ª cópia para o fundo nunca sumir!
         if (assets.bg.complete) {
             let bgScroll = (cameraX * 0.2) % 800;
             ctx.drawImage(assets.bg, -bgScroll, 0, 800, 600);
@@ -99,38 +94,37 @@ function gameLoop(timeStamp) {
             ctx.drawImage(assets.bg, 2400 - bgScroll, 0, 800, 600);
         }
 
-        // DESENHAR PORTAL FINAL (Com efeito de pulso luminoso)
+        // DESENHAR PORTAL FINAL
         let finish = levelData.finishLine;
         let pulse = Math.abs(Math.sin(Date.now() / 300)) * 0.5 + 0.3;
-        ctx.fillStyle = `rgba(46, 204, 113, ${pulse})`; // Fundo Verde Translúcido
+        ctx.fillStyle = `rgba(46, 204, 113, ${pulse})`; 
         ctx.fillRect(finish.x - cameraX, finish.y, finish.width, finish.height);
-        
-        ctx.strokeStyle = "#2ecc71"; // Borda verde brilhante
+        ctx.strokeStyle = "#2ecc71"; 
         ctx.lineWidth = 4;
         ctx.strokeRect(finish.x - cameraX, finish.y, finish.width, finish.height);
-        
         ctx.fillStyle = "white";
         ctx.font = "bold 20px Courier New";
         ctx.textAlign = "center";
         ctx.fillText("SAÍDA", finish.x - cameraX + finish.width/2, finish.y - 15);
 
-        // Plataformas
+        // DESENHAR PLATAFORMAS (Sem margens de erro)
         levelData.platforms.forEach(p => {
-            let img = p.type === 'chao' ? assets.chao : p.type === 'armario' ? assets.arm : p.type === 'escada' ? assets.esc : assets.and;
+            let img = p.type === 'chao' ? assets.chao : assets.arm;
             if (img.complete) {
                 if (p.type === 'chao') {
                     for(let i=0; i<p.width; i+=200) ctx.drawImage(img, p.x+i-cameraX, p.y, 200, p.height);
-                } else ctx.drawImage(img, p.x-cameraX, p.y, p.width, p.height);
+                } else {
+                    ctx.drawImage(img, p.x-cameraX, p.y, p.width, p.height);
+                }
             } else {
                 ctx.fillStyle = p.type === 'chao' ? "#1e272e" : "gray";
                 ctx.fillRect(p.x - cameraX, p.y, p.width, p.height);
             }
         });
 
-        // Documentos Flutuantes
+        // DESENHAR DOCUMENTOS 
         let tempoAnimacao = Date.now();
         let flutuacaoY = Math.sin(tempoAnimacao / 200) * 8; 
-
         levelData.items.forEach(it => {
             if (!it.collected && assets.doc.complete) {
                 ctx.save();
@@ -153,14 +147,12 @@ function gameLoop(timeStamp) {
 }
 
 function checkGameplay() {
-    // Coletar itens
     levelData.items.forEach(item => {
         if (!item.collected && isColliding(player, item)) {
             item.collected = true; score += 10; scoreDisplay.innerText = `Documentos: ${score}`;
         }
     });
 
-    // Inimigos
     enemiesList.forEach(enemy => {
         if (enemy.y < 9000 && isColliding(player, enemy)) {
             if (player.vy > 0 && player.y + player.height - player.vy <= enemy.y + 20) {
@@ -174,12 +166,7 @@ function checkGameplay() {
         }
     });
 
-    // Chegar ao Portal
-    if (isColliding(player, levelData.finishLine)) {
-        gameState = 'WIN';
-    }
-
-    // Cair do mapa
+    if (isColliding(player, levelData.finishLine)) gameState = 'WIN';
     if (player.y > 600) { health = 0; gameState = 'GAMEOVER'; }
 }
 
