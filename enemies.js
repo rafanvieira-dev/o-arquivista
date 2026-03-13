@@ -5,8 +5,8 @@ class Enemy {
         this.y = y;
         
         // Tamanho ajustado para ficar proporcional e "legal" no jogo
-        this.width = 60;
-        this.height = 35;
+        this.width = 70;
+        this.height = 70;
         
         this.vx = 2; // Velocidade de patrulha
         this.patrolDistance = patrolDistance;
