@@ -3,7 +3,7 @@ class Player {
         this.x = x;
         this.y = y;
         
-        // Tamanho do personagem no jogo (pode ajustar se quiser maior ou menor)
+        // Tamanho do personagem no jogo
         this.width = 64;  
         this.height = 85; 
         
@@ -16,23 +16,19 @@ class Player {
         this.gravity = 0.6;
         this.grounded = false;
         
-        // Direção em que está virado (1 = direita, -1 = esquerda)
+        // Direção (1 = direita, -1 = esquerda)
         this.facing = 1; 
 
         // --- SISTEMA DE SPRITES ---
         this.image = new Image();
-        this.image.src = 'assets/sprites/arquivista.png'; // Caminho da imagem
+        this.image.src = 'assets/sprites/arquivista.png'; 
         
-        // Tamanho de cada corte na imagem original gerada (4 colunas e 3 linhas)
-        this.spriteWidth = 256; 
-        this.spriteHeight = 341; 
-        
-        this.frameX = 0; // Coluna atual
-        this.frameY = 0; // Linha atual (0=Parado, 1=Correndo, 2=Pulando)
-        this.maxFrame = 3; // O limite máximo varia por animação
+        this.frameX = 0; 
+        this.frameY = 0; 
+        this.maxFrame = 3; 
         
         // Controle de tempo da animação
-        this.fps = 8; // Velocidade da animação (frames por segundo)
+        this.fps = 8; 
         this.frameInterval = 1000 / this.fps;
         this.frameTimer = 0;
     }
@@ -43,10 +39,10 @@ class Player {
         
         if (keys.left) {
             this.vx = -currentSpeed;
-            this.facing = -1; // Vira para a esquerda
+            this.facing = -1;
         } else if (keys.right) {
             this.vx = currentSpeed;
-            this.facing = 1;  // Vira para a direita
+            this.facing = 1; 
         } else {
             this.vx = 0;
         }
@@ -62,25 +58,21 @@ class Player {
         this.x += this.vx;
         this.y += this.vy;
 
-        // Resetar o chão para verificação de colisão
         this.grounded = false;
 
-        // --- CONTROLE DE QUAL ANIMAÇÃO TOCAR ---
+        // --- CONTROLE DE ANIMAÇÃO ---
         if (!this.grounded && this.vy !== 0) {
-            // Pulando (Linha de baixo da imagem)
-            this.frameY = 2; 
+            this.frameY = 2; // Pulando
             this.maxFrame = 3;
         } else if (this.vx !== 0) {
-            // Correndo (Linha do meio)
-            this.frameY = 1; 
+            this.frameY = 1; // Correndo
             this.maxFrame = 3;
         } else {
-            // Parado (Linha de cima)
-            this.frameY = 0; 
-            this.maxFrame = 2; // O parado tem menos frames dinâmicos
+            this.frameY = 0; // Parado
+            this.maxFrame = 2; 
         }
 
-        // --- AVANÇAR OS FRAMES DA ANIMAÇÃO ---
+        // --- AVANÇAR OS FRAMES ---
         if (this.frameTimer > this.frameInterval) {
             if (this.frameX < this.maxFrame) {
                 this.frameX++;
@@ -94,24 +86,30 @@ class Player {
     }
 
     draw(ctx, cameraX) {
-        let cropX = this.frameX * this.spriteWidth;
-        let cropY = this.frameY * this.spriteHeight;
+        // PREVENÇÃO DE ERRO: Só tenta desenhar se a imagem já tiver carregado no navegador
+        if (this.image.width === 0) return;
+
+        // CÁLCULO DINÂMICO: Divide a imagem total pelo número de linhas e colunas
+        let sWidth = this.image.width / 4;  // 4 bonecos de largura
+        let sHeight = this.image.height / 3; // 3 bonecos de altura
+
+        // Corta na posição exata baseada no tamanho calculado
+        let cropX = this.frameX * sWidth;
+        let cropY = this.frameY * sHeight;
 
         ctx.save();
 
         if (this.facing === -1) {
-            // Vira o personagem para a esquerda
             ctx.scale(-1, 1);
             ctx.drawImage(
                 this.image, 
-                cropX, cropY, this.spriteWidth, this.spriteHeight, 
+                cropX, cropY, sWidth, sHeight, 
                 -(this.x - cameraX + this.width), this.y, this.width, this.height
             );
         } else {
-            // Personagem virado para a direita normal
             ctx.drawImage(
                 this.image, 
-                cropX, cropY, this.spriteWidth, this.spriteHeight, 
+                cropX, cropY, sWidth, sHeight, 
                 this.x - cameraX, this.y, this.width, this.height
             );
         }
