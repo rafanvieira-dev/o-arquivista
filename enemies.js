@@ -3,7 +3,8 @@ class Enemy {
         this.startX = x; this.startY = y;
         this.x = x; this.y = y;
         this.width = 50; this.height = 50;
-        this.vx = 2; this.patrolDistance = patrolDistance;
+        this.vx = 2; // Velocidade por frame
+        this.patrolDistance = patrolDistance;
         this.facing = 1;
         this.image = new Image();
         this.image.src = 'assets/sprites/rato.png';
@@ -29,6 +30,7 @@ class Enemy {
         let sWidth = this.image.width / 4;
         let sHeight = this.image.height / 4;
         ctx.save();
+        // Desenho centralizado
         if (this.facing === -1) {
             ctx.scale(-1, 1);
             ctx.drawImage(this.image, this.frameX * sWidth, 0, sWidth, sHeight, -(this.x - cameraX + 50), this.y, 50, 50);
@@ -38,9 +40,9 @@ class Enemy {
         ctx.restore();
     }
 }
-// Lista atualizada de inimigos
+
 const enemiesList = [
-    new Enemy(450, 500, 200),
-    new Enemy(1450, 200, 100),
-    new Enemy(2650, 370, 150)
+    new Enemy(500, 500, 300),
+    new Enemy(1400, 200, 150),
+    new Enemy(2600, 350, 200)
 ];
