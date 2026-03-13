@@ -4,8 +4,7 @@ class Enemy {
         this.x = x;
         this.y = y;
         
-        // CORREÇÃO DO ACHATAMENTO:
-        // Como o corte da imagem é um quadrado, a largura e altura no jogo também têm de ser iguais!
+        // Tamanho de 60x60 para o rato ficar com a proporção correta
         this.width = 60;
         this.height = 60; 
         
@@ -85,9 +84,9 @@ class Enemy {
     }
 }
 
-// CORREÇÃO DA POSIÇÃO (Y) - Compensando o espaço transparente debaixo das patas
+// Inicializando os inimigos da fase nas novas posições das estantes
 const enemiesList = [
-    new Enemy(400, 505, 200), // Rato no chão (+15px para baixo)
-    new Enemy(900, 505, 150), // Rato no chão (+15px para baixo)
-    new Enemy(550, 305, 100)  // Rato na estante (+15px para baixo)
+    new Enemy(350, 505, 150), // Rato patrulhando o chão escuro
+    new Enemy(920, 375, 150), // Rato patrulhando a Mesa de Leitura 2
+    new Enemy(1250, 235, 100) // Rato patrulhando o Arquivo de Aço
 ];
