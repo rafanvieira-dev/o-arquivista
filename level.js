@@ -1,24 +1,28 @@
+// A linha do chão. Todos os objetos vão usar esta linha como base!
+const FLOOR_Y = 500;
+
 const levelData = {
     platforms: [
-        // Chão principal (A linha do chão é exatamente no Y = 550)
-        { x: 0, y: 550, width: 5000, height: 100, type: 'chao' }, 
+        // O chão principal
+        { x: 0, y: FLOOR_Y, width: 5000, height: 100, type: 'chao' }, 
         
-        // ARMÁRIOS (A base de todos toca perfeitamente no chão 550)
-        { x: 400, y: 400, width: 150, height: 150, type: 'armario' }, // 400 + 150 = 550
-        { x: 750, y: 450, width: 250, height: 100, type: 'armario' }, // 450 + 100 = 550
-        { x: 1200, y: 300, width: 150, height: 250, type: 'armario' },// 300 + 250 = 550
-        { x: 1600, y: 350, width: 200, height: 200, type: 'armario' },// 350 + 200 = 550
-        { x: 2100, y: 400, width: 150, height: 150, type: 'armario' },// 400 + 150 = 550
-        { x: 2500, y: 250, width: 150, height: 300, type: 'armario' },// 250 + 300 = 550
-        { x: 3000, y: 450, width: 300, height: 100, type: 'armario' } // 450 + 100 = 550
+        // APENAS ARMÁRIOS: O Y é sempre "FLOOR_Y - altura". Isto cola-os no chão perfeitamente!
+        { x: 400, y: FLOOR_Y - 100, width: 150, height: 100, type: 'armario' }, // Pequeno
+        { x: 700, y: FLOOR_Y - 150, width: 200, height: 150, type: 'armario' }, // Médio
+        { x: 1050, y: FLOOR_Y - 80, width: 120, height: 80, type: 'armario' },  // Muito baixo
+        { x: 1400, y: FLOOR_Y - 200, width: 180, height: 200, type: 'armario' },// Alto
+        { x: 1800, y: FLOOR_Y - 120, width: 150, height: 120, type: 'armario' },
+        { x: 2200, y: FLOOR_Y - 250, width: 200, height: 250, type: 'armario' },// Gigante
+        { x: 2700, y: FLOOR_Y - 100, width: 300, height: 100, type: 'armario' },// Largo
+        { x: 3200, y: FLOOR_Y - 180, width: 150, height: 180, type: 'armario' }
     ],
     items: [
-        // Documentos em cima de alguns armários
-        { x: 450, y: 350, width: 50, height: 50, collected: false }, 
-        { x: 1250, y: 250, width: 50, height: 50, collected: false },
-        { x: 1650, y: 300, width: 50, height: 50, collected: false },
-        { x: 2550, y: 200, width: 50, height: 50, collected: false },
-        { x: 3100, y: 400, width: 50, height: 50, collected: false } 
+        // Documentos colocados em cima dos armários (Y = Altura do armário - altura do item)
+        { x: 450, y: FLOOR_Y - 100 - 40, width: 40, height: 40, collected: false }, 
+        { x: 750, y: FLOOR_Y - 150 - 40, width: 40, height: 40, collected: false },
+        { x: 1450, y: FLOOR_Y - 200 - 40, width: 40, height: 40, collected: false },
+        { x: 2250, y: FLOOR_Y - 250 - 40, width: 40, height: 40, collected: false },
+        { x: 2800, y: FLOOR_Y - 100 - 40, width: 40, height: 40, collected: false }
     ],
-    finishLine: { x: 3800, y: 350, width: 80, height: 200 } 
+    finishLine: { x: 3800, y: FLOOR_Y - 150, width: 80, height: 150 } 
 };
