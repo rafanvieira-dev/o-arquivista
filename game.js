@@ -4,6 +4,10 @@ const ctx = canvas.getContext('2d');
 const scoreDisplay = document.getElementById('scoreDisplay');
 const healthDisplay = document.getElementById('healthDisplay');
 
+// Carregar o novo fundo
+const bgImage = new Image();
+bgImage.src = 'assets/sprites/fundo.png';
+
 let player = new Player(50, 400);
 let cameraX = 0;
 let score = 0;
@@ -102,9 +106,11 @@ function resetGame() {
     scoreDisplay.innerText = `Documentos: ${score}`;
     healthDisplay.innerText = `Vidas: ${health}`;
     levelData.items.forEach(i => i.collected = false);
-    enemiesList[0].x = enemiesList[0].startX; enemiesList[0].y = 530;
-    enemiesList[1].x = enemiesList[1].startX; enemiesList[1].y = 530;
-    enemiesList[2].x = enemiesList[2].startX; enemiesList[2].y = 330;
+    
+    // Volta a colocar os ratos nas posições corrigidas
+    enemiesList[0].x = enemiesList[0].startX; enemiesList[0].y = 505;
+    enemiesList[1].x = enemiesList[1].startX; enemiesList[1].y = 505;
+    enemiesList[2].x = enemiesList[2].startX; enemiesList[2].y = 305;
 }
 
 function drawTextCenter(text, size, color, offset = 0) {
@@ -114,14 +120,13 @@ function drawTextCenter(text, size, color, offset = 0) {
     ctx.fillText(text, canvas.width / 2, canvas.height / 2 + offset);
 }
 
-// Variável para calcular o tempo da animação
 let lastTime = 0;
 
 function gameLoop(timeStamp) {
-    // Calculando o deltaTime (tempo que passou desde o último frame)
     let deltaTime = timeStamp - lastTime;
     lastTime = timeStamp;
 
+    // Apenas limpa o ecrã com a cor base
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (gameState === 'START') {
@@ -139,11 +144,9 @@ function gameLoop(timeStamp) {
         drawTextCenter('Pressione ENTER para Jogar Novamente', 20, '#f1c40f', 70);
     }
     else if (gameState === 'PLAYING') {
-        // Passando o deltaTime para o player
         player.update(keys, deltaTime);
         checkCollisions();
         
-        // AQUI ESTÁ A ATUALIZAÇÃO DOS INIMIGOS: passando o deltaTime
         enemiesList.forEach(e => e.update(deltaTime));
         checkItemsAndEnemies();
 
@@ -151,6 +154,17 @@ function gameLoop(timeStamp) {
         if (cameraX < 0) cameraX = 0; 
         if (cameraX > 2000 - canvas.width) cameraX = 2000 - canvas.width; 
 
+        // --- SISTEMA DE FUNDO PARALLAX ---
+        if (bgImage.complete && bgImage.naturalWidth > 0) {
+            // O fundo move-se a 30% da velocidade da câmara para dar sensação de distância
+            let bgScroll = (cameraX * 0.3) % canvas.width;
+            
+            // Desenha o fundo duas vezes lado a lado para o efeito de "loop" contínuo
+            ctx.drawImage(bgImage, -bgScroll, 0, canvas.width, canvas.height);
+            ctx.drawImage(bgImage, canvas.width - bgScroll, 0, canvas.width, canvas.height);
+        }
+
+        // --- DESENHO DOS OBSTÁCULOS E INIMIGOS ---
         for (let plat of levelData.platforms) {
             ctx.fillStyle = plat.color;
             ctx.fillRect(plat.x - cameraX, plat.y, plat.width, plat.height);
@@ -168,7 +182,6 @@ function gameLoop(timeStamp) {
         }
 
         enemiesList.forEach(e => e.draw(ctx, cameraX));
-
         player.draw(ctx, cameraX);
         
         if (player.y > canvas.height) {
@@ -177,9 +190,7 @@ function gameLoop(timeStamp) {
         }
     }
 
-    // O requestAnimationFrame injeta automaticamente o timeStamp na função
     requestAnimationFrame(gameLoop);
 }
 
-// Inicia o loop (passando 0 como tempo inicial para evitar erros no primeiro frame)
 requestAnimationFrame(gameLoop);
