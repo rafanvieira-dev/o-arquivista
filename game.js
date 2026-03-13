@@ -4,7 +4,7 @@ const scoreDisplay = document.getElementById('scoreDisplay');
 const healthDisplay = document.getElementById('healthDisplay');
 const timerDisplay = document.getElementById('timerDisplay');
 
-// Assets - Garantindo caminhos corretos
+// Assets
 const bgImage = new Image(); bgImage.src = 'assets/sprites/fundo.png';
 const armarioImg = new Image(); armarioImg.src = 'assets/sprites/armario.png';
 const escadaImg = new Image(); escadaImg.src = 'assets/sprites/escada.png';
@@ -38,21 +38,21 @@ function resetGame() {
     enemiesList.forEach(e => { e.x = e.startX; e.y = e.startY; e.vx = Math.abs(e.vx); });
 }
 
-// NOVO SISTEMA DE COLISÃO ROBUSTO (Resolve X e Y separadamente)
+// NOVO SISTEMA DE COLISÃO ROBUSTO
 function handleCollisions() {
     player.grounded = false;
     levelData.platforms.forEach(plat => {
         if (player.x < plat.x + plat.width && player.x + player.width > plat.x &&
             player.y < plat.y + plat.height && player.y + player.height > plat.y) {
             
+            // Calcula qual lado colidiu mais profundamente
             let overlapX = Math.min(player.x + player.width - plat.x, plat.x + plat.width - player.x);
             let overlapY = Math.min(player.y + player.height - plat.y, plat.y + plat.height - player.y);
 
-            if (overlapX < overlapY) {
+            if (overlapX < overlapY) { // Colisão lateral
                 if (player.x + player.width/2 < plat.x + plat.width/2) player.x -= overlapX;
                 else player.x += overlapX;
-                player.vx = 0;
-            } else {
+            } else { // Colisão vertical
                 if (player.y + player.height/2 < plat.y + plat.height/2) {
                     player.y -= overlapY; player.vy = 0; player.grounded = true;
                 } else {
@@ -73,32 +73,31 @@ function gameLoop(timeStamp) {
         if (timeLeft <= 0) gameState = 'GAMEOVER';
 
         player.update(keys, deltaTime);
-        handleCollisions();
+        handleCollisions(); // Aplica a física antes de desenhar
         
         enemiesList.forEach(e => e.update(deltaTime));
         checkGameplay();
 
+        // Câmera suave
         cameraX = Math.max(0, Math.min(player.x - 350, 3200));
 
         // DESENHAR
         ctx.clearRect(0, 0, 800, 600);
-        
-        // Fundo
         ctx.drawImage(bgImage, -(cameraX * 0.2 % 800), 0, 800, 600);
         ctx.drawImage(bgImage, 800 - (cameraX * 0.2 % 800), 0, 800, 600);
 
-        // Chão e Obstáculos
         levelData.platforms.forEach(p => {
             if (p.type === 'chao') {
                 if (chaoImg.complete) {
                     for(let i=0; i<p.width; i+=200) ctx.drawImage(chaoImg, p.x+i-cameraX, p.y, 200, p.height);
                 } else {
-                    ctx.fillStyle = "#34495e"; ctx.fillRect(p.x - cameraX, p.y, p.width, p.height);
+                    ctx.fillStyle = "#5c4033"; // Marrom para o chão não "sumir"
+                    ctx.fillRect(p.x - cameraX, p.y, p.width, p.height);
                 }
             } else {
                 let img = p.type === 'armario' ? armarioImg : p.type === 'escada' ? escadaImg : p.type === 'andaime' ? andaimeImg : null;
                 if (img && img.complete) ctx.drawImage(img, p.x - cameraX, p.y, p.width, p.height);
-                else { ctx.fillStyle = "white"; ctx.fillRect(p.x - cameraX, p.y, p.width, p.height); }
+                else { ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.fillRect(p.x - cameraX, p.y, p.width, p.height); }
             }
         });
 
@@ -109,7 +108,10 @@ function gameLoop(timeStamp) {
         enemiesList.forEach(e => e.draw(ctx, cameraX));
         player.draw(ctx, cameraX);
     } else {
-        drawUI();
+        ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(0,0,800,600);
+        ctx.fillStyle = "white"; ctx.font = "40px Courier New"; ctx.textAlign = "center";
+        ctx.fillText(gameState === 'START' ? "O ARQUIVISTA" : "FIM DE JOGO", 400, 300);
+        ctx.font = "20px Courier New"; ctx.fillText("Pressione ENTER para começar", 400, 350);
     }
     requestAnimationFrame(gameLoop);
 }
@@ -136,12 +138,6 @@ function checkGameplay() {
         }
     });
     if (player.y > 600) { health = 0; gameState = 'GAMEOVER'; }
-}
-
-function drawUI() {
-    ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(0,0,800,600);
-    ctx.fillStyle = "white"; ctx.font = "40px Courier New"; ctx.textAlign = "center";
-    ctx.fillText(gameState === 'START' ? "O ARQUIVISTA" : "FIM DE JOGO", 400, 300);
 }
 
 requestAnimationFrame(gameLoop);
