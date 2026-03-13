@@ -143,7 +143,8 @@ function gameLoop(timeStamp) {
         player.update(keys, deltaTime);
         checkCollisions();
         
-        enemiesList.forEach(e => e.update());
+        // AQUI ESTÁ A ATUALIZAÇÃO DOS INIMIGOS: passando o deltaTime
+        enemiesList.forEach(e => e.update(deltaTime));
         checkItemsAndEnemies();
 
         cameraX = player.x - canvas.width / 2 + player.width / 2;
