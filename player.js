@@ -1,8 +1,8 @@
 class Player {
     constructor(x, y) {
         this.x = x; this.y = y;
-        this.width = 40;   // Caixa de colisão real
-        this.height = 78;  
+        this.width = 40;   // Colisão real
+        this.height = 75;  
         this.vx = 0; this.vy = 0;
         this.speed = 5; this.jumpForce = -17; this.gravity = 0.9;
         this.grounded = false; this.facing = 1; this.invincible = false;
@@ -40,7 +40,7 @@ class Player {
         let sWidth = this.image.width / 4;
         let sHeight = this.image.height / 3;
         ctx.save();
-        // Ajuste de desenho para os pés tocarem a plataforma
+        // Ajuste para alinhar os pés com a colisão
         let drawX = this.x - cameraX - 15;
         let drawY = this.y - 12;
         
