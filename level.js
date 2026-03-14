@@ -11,7 +11,7 @@ function generateLevel(levelNumber) {
     let items = [];
     let enemies = [];
 
-    // LÓGICA DE DISTRIBUIÇÃO SEGURA 
+    // GERAÇÃO DE CENÁRIO (Sem bater nas emendas)
     for (let i = 0; i < numChunks; i++) {
         let chunkStart = i * bgW;
 
@@ -36,14 +36,14 @@ function generateLevel(levelNumber) {
         platforms.push({ x: arm2X, y: FLOOR_Y - arm2H, width: arm2W, height: arm2H, type: 'armario' });
     }
 
-    // --- SELEÇÃO DE NPC POR FASE ---
+    // --- ESCOLHA DO NPC POR FASE (Repete a cada 3 fases) ---
     let npcType;
     let mod = levelNumber % 3;
     if (mod === 1) npcType = 'flavio';
     else if (mod === 2) npcType = 'rosale';
     else npcType = 'eliezer';
 
-    // O NPC fica a aguardar os documentos 200px antes da linha final!
+    // Coloca o NPC perto da linha de chegada
     let npc = { type: npcType, x: levelLength - 200, y: FLOOR_Y };
 
     return {
@@ -51,7 +51,7 @@ function generateLevel(levelNumber) {
         platforms: platforms,
         items: items,
         enemies: enemies,
-        npc: npc, // Enviamos o NPC para o motor do jogo!
+        npc: npc, // NPC exportado para o game.js
         finishLine: { x: levelLength, y: FLOOR_Y - 300, width: 120, height: 300 },
         timeLimit: 60 + (levelNumber * 20) 
     };
