@@ -8,8 +8,6 @@ const healthDisplay = document.getElementById('healthDisplay');
 const timerDisplay = document.getElementById('timerDisplay');
 
 const assets = { bg: new Image(), arm: new Image(), doc: new Image() };
-// Imagem com a grelha de 9 cenários! (Mude para .png se o seu ficheiro for png)
-assets.bg.src = 'assets/sprites/fundo.png'; 
 assets.arm.src = 'assets/sprites/armario.png';
 assets.doc.src = 'assets/sprites/documento.png';
 
@@ -21,7 +19,6 @@ let levelData = {};
 let keys = { left: false, right: false, up: false };
 let jumpJustPressed = false; let lastTime = 0;
 
-// CONTROLES TECLADO
 window.addEventListener('keydown', e => {
     if (e.code === 'ArrowLeft') keys.left = true;
     if (e.code === 'ArrowRight') keys.right = true;
@@ -40,56 +37,42 @@ function checkMenuProgression() {
     else if (gameState === 'GAME_COMPLETED') resetGame();
 }
 
-// --- CONTROLES MOBILE (Toque Invisível na Tela) ---
+// --- COMANDOS INVISÍVEIS PARA TELEMÓVEL ---
 function handleTouch(e) {
     if (gameState !== 'PLAYING') {
         if (e.type === 'touchstart') checkMenuProgression();
         return;
     }
     
-    e.preventDefault(); // Evita scroll do ecrã
-
-    // Zera os botões para recalcular onde os dedos estão
+    e.preventDefault(); 
     keys.left = false;
     keys.right = false;
     let isJumping = false;
 
     const screenWidth = window.innerWidth;
 
-    // Analisa cada dedo que está a tocar no ecrã
     for (let i = 0; i < e.touches.length; i++) {
         let touchX = e.touches[i].clientX;
-
-        // Zona 1: 0% a 25% da tela (Esquerda)
-        if (touchX < screenWidth * 0.25) {
-            keys.left = true;
-        } 
-        // Zona 2: 25% a 50% da tela (Direita)
-        else if (touchX >= screenWidth * 0.25 && touchX < screenWidth * 0.5) {
-            keys.right = true;
-        } 
-        // Zona 3: 50% a 100% da tela (Pulo)
-        else if (touchX >= screenWidth * 0.5) {
-            isJumping = true;
-        }
+        if (touchX < screenWidth * 0.25) keys.left = true;
+        else if (touchX >= screenWidth * 0.25 && touchX < screenWidth * 0.5) keys.right = true;
+        else if (touchX >= screenWidth * 0.5) isJumping = true;
     }
 
-    // Regista o clique de pulo sem repetir infinitamente no ar
-    if (isJumping && !keys.up) {
-        jumpJustPressed = true;
-    }
+    if (isJumping && !keys.up) jumpJustPressed = true;
     keys.up = isJumping;
 }
 
-// Ouve os toques em qualquer lugar do ecrã
 window.addEventListener('touchstart', handleTouch, { passive: false });
 window.addEventListener('touchmove', handleTouch, { passive: false });
 window.addEventListener('touchend', handleTouch, { passive: false });
 window.addEventListener('touchcancel', handleTouch, { passive: false });
 
-
 function initLevel(lvl) {
     levelData = generateLevel(lvl);
+    
+    // CARREGA A IMAGEM EXATA DESTA FASE (fundo1.png, fundo2.png, etc)
+    assets.bg.src = levelData.bgImage; 
+    
     player = new Player(100, 300);
     cameraX = 0; timer = levelData.timeLimit; timerAccumulator = 0;
     gameState = 'PLAYING';
@@ -175,26 +158,17 @@ function gameLoop(timeStamp) {
         cameraX = Math.max(0, Math.min(player.x - 400, levelData.finishLine.x - 400));
         ctx.clearRect(0, 0, 800, 600);
 
-        // --- SISTEMA CORRIGIDO DE CORTAR OS FUNDOS ---
+        // --- SISTEMA CORRIGIDO DO FUNDO ---
         if (assets.bg.complete && assets.bg.naturalHeight > 0) {
-            // A imagem tem 3x3 cenários
-            let cellW = assets.bg.naturalWidth / 3;
-            let cellH = assets.bg.naturalHeight / 3;
+            let sWidth = assets.bg.naturalWidth;
+            let sHeight = assets.bg.naturalHeight * 0.85; // Corta apenas os 15% de baixo (barra preta)
             
-            // Cada nível tem um índice diferente (0 a 8)
-            let bgIndex = (currentLevel - 1) % 9;
-            let col = bgIndex % 3;
-            let row = Math.floor(bgIndex / 3);
+            let ratio = 600 / sHeight;
+            let bgW = sWidth * ratio;
             
-            let sX = col * cellW;
-            let sY = row * cellH;
-            
-            let cutHeight = cellH * 0.85; // Ignora o fundo preto de cada quadradinho
-            let ratio = 600 / cutHeight;
-            let bgW = cellW * ratio;
-            
+            // Desenha a imagem inteira em loop
             for(let i = 0; i < levelData.finishLine.x + 800; i += bgW) {
-                ctx.drawImage(assets.bg, sX, sY, cellW, cutHeight, i - cameraX, 0, bgW, 600);
+                ctx.drawImage(assets.bg, 0, 0, sWidth, sHeight, i - cameraX, 0, bgW, 600);
             }
         }
 
