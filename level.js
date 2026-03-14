@@ -11,7 +11,6 @@ function generateLevel(levelNumber) {
     let items = [];
     let enemies = [];
 
-    // GERAÇÃO DE CENÁRIO (Sem bater nas emendas)
     for (let i = 0; i < numChunks; i++) {
         let chunkStart = i * bgW;
 
@@ -36,22 +35,22 @@ function generateLevel(levelNumber) {
         platforms.push({ x: arm2X, y: FLOOR_Y - arm2H, width: arm2W, height: arm2H, type: 'armario' });
     }
 
-    // --- ESCOLHA DO NPC POR FASE (Repete a cada 3 fases) ---
     let npcType;
     let mod = levelNumber % 3;
     if (mod === 1) npcType = 'flavio';
     else if (mod === 2) npcType = 'rosale';
     else npcType = 'eliezer';
 
-    // CORREÇÃO: Subtraímos a altura do NPC (75) para que ele fique em cima do chão!
-    let npc = { type: npcType, x: levelLength - 200, y: FLOOR_Y - 75 };
+    // A MÁGICA AQUI: O portal (finishLine) começa em 'levelLength' e tem 120 de largura. 
+    // Colocamos o NPC no 'levelLength + 160' para ele ficar perfeitamente à espera DEPOIS da porta!
+    let npc = { type: npcType, x: levelLength + 160, y: FLOOR_Y };
 
     return {
         bgImage: backgroundToUse,
         platforms: platforms,
         items: items,
         enemies: enemies,
-        npc: npc, // NPC exportado para o game.js
+        npc: npc, 
         finishLine: { x: levelLength, y: FLOOR_Y - 300, width: 120, height: 300 },
         timeLimit: 60 + (levelNumber * 20) 
     };
