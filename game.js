@@ -7,8 +7,6 @@ const healthDisplay = document.getElementById('healthDisplay');
 const timerDisplay = document.getElementById('timerDisplay');
 
 const assets = { bg: new Image(), arm: new Image(), doc: new Image() };
-// CORRIGIDO AQUI PARA .PNG
-assets.bg.src = 'assets/sprites/fundo.png'; 
 assets.arm.src = 'assets/sprites/armario.png';
 assets.doc.src = 'assets/sprites/documento.png';
 
@@ -20,16 +18,13 @@ let levelData = {};
 let keys = { left: false, right: false, up: false };
 let jumpJustPressed = false; let lastTime = 0;
 
+// CONTROLES DE TECLADO
 window.addEventListener('keydown', e => {
     if (e.code === 'ArrowLeft') keys.left = true;
     if (e.code === 'ArrowRight') keys.right = true;
     if (e.code === 'Space') { if (!keys.up) jumpJustPressed = true; keys.up = true; }
     
-    if (e.code === 'Enter') {
-        if (gameState === 'START' || gameState === 'GAMEOVER') resetGame();
-        else if (gameState === 'LEVEL_CLEAR') nextLevel();
-        else if (gameState === 'GAME_COMPLETED') resetGame();
-    }
+    if (e.code === 'Enter') checkMenuProgression();
 });
 window.addEventListener('keyup', e => {
     if (e.code === 'ArrowLeft') keys.left = false;
@@ -37,8 +32,47 @@ window.addEventListener('keyup', e => {
     if (e.code === 'Space') keys.up = false;
 });
 
+// CONTROLES MOBILE (Toque no ecrã)
+function checkMenuProgression() {
+    if (gameState === 'START' || gameState === 'GAMEOVER') resetGame();
+    else if (gameState === 'LEVEL_CLEAR') nextLevel();
+    else if (gameState === 'GAME_COMPLETED') resetGame();
+}
+
+// Toque na ecrã para iniciar o jogo em vez de Enter
+window.addEventListener('touchstart', (e) => {
+    if (gameState !== 'PLAYING') checkMenuProgression();
+});
+
+// Botões Virtuais
+const btnLeft = document.getElementById('btn-left');
+const btnRight = document.getElementById('btn-right');
+const btnJump = document.getElementById('btn-jump');
+
+function setupTouchBtn(btn, key) {
+    btn.addEventListener('touchstart', (e) => { 
+        e.preventDefault(); // Previne zoom no telemóvel
+        if (gameState === 'PLAYING') {
+            keys[key] = true; 
+            if (key === 'up' && !keys.up) jumpJustPressed = true;
+        }
+    });
+    btn.addEventListener('touchend', (e) => { 
+        e.preventDefault(); 
+        keys[key] = false; 
+    });
+}
+setupTouchBtn(btnLeft, 'left');
+setupTouchBtn(btnRight, 'right');
+setupTouchBtn(btnJump, 'up');
+
+// Lógica de Fases
 function initLevel(lvl) {
     levelData = generateLevel(lvl);
+    
+    // CARREGA O FUNDO DINÂMICO
+    assets.bg.src = levelData.bgImage; 
+    
     player = new Player(100, 300);
     cameraX = 0;
     timer = levelData.timeLimit;
@@ -50,25 +84,19 @@ function initLevel(lvl) {
 }
 
 function resetGame() {
-    currentLevel = 1;
-    score = 0;
-    health = 3;
-    initLevel(currentLevel);
+    currentLevel = 1; score = 0; health = 3; initLevel(currentLevel);
 }
 
 function nextLevel() {
     currentLevel++;
-    if (currentLevel > MAX_LEVELS) {
-        gameState = 'GAME_COMPLETED';
-    } else {
-        initLevel(currentLevel);
-    }
+    if (currentLevel > MAX_LEVELS) gameState = 'GAME_COMPLETED';
+    else initLevel(currentLevel);
 }
 
 function updateHUD() {
-    scoreDisplay.innerText = `Documentos: ${score}`;
-    timerDisplay.innerText = `Tempo: ${timer}`;
-    healthDisplay.innerText = `Vidas: ${'❤️'.repeat(Math.max(0, health))}`;
+    scoreDisplay.innerText = `Doc: ${score}`;
+    timerDisplay.innerText = `⏳ ${timer}`;
+    healthDisplay.innerText = `❤️ ${Math.max(0, health)}`;
 }
 
 function isColliding(a, b) {
@@ -102,9 +130,7 @@ function gameLoop(timeStamp) {
     if (gameState === 'PLAYING') {
         timerAccumulator += deltaTime;
         if (timerAccumulator >= 1000) { 
-            timer--; 
-            updateHUD();
-            timerAccumulator = 0; 
+            timer--; updateHUD(); timerAccumulator = 0; 
             if (timer <= 0) gameState = 'GAMEOVER';
         }
 
@@ -131,20 +157,17 @@ function gameLoop(timeStamp) {
             }
         });
 
-        if (isColliding(player, levelData.finishLine)) {
-            gameState = 'LEVEL_CLEAR';
-        }
+        if (isColliding(player, levelData.finishLine)) gameState = 'LEVEL_CLEAR';
 
         cameraX = Math.max(0, Math.min(player.x - 400, levelData.finishLine.x - 400));
         ctx.clearRect(0, 0, 800, 600);
 
+        // Fundo dinâmico e cortado
         if (assets.bg.complete && assets.bg.naturalHeight > 0) {
             let sWidth = assets.bg.naturalWidth;
             let sHeight = assets.bg.naturalHeight * 0.85; 
-            
             let ratio = 600 / sHeight;
             let bgW = sWidth * ratio;
-            
             for(let i = 0; i < levelData.finishLine.x + 800; i += bgW) {
                 ctx.drawImage(assets.bg, 0, 0, sWidth, sHeight, i - cameraX, 0, bgW, 600);
             }
@@ -155,8 +178,7 @@ function gameLoop(timeStamp) {
             ctx.drawImage(assets.arm, p.x - cameraX, p.y, p.width, p.height + 30);
         });
 
-        let animTime = Date.now();
-        let floatY = Math.sin(animTime / 200) * 5; 
+        let floatY = Math.sin(Date.now() / 200) * 5; 
         levelData.items.forEach(it => {
             if (!it.collected) ctx.drawImage(assets.doc, it.x - cameraX, it.y + floatY, it.width, it.height);
         });
@@ -174,30 +196,31 @@ function gameLoop(timeStamp) {
         ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0,0,800,600);
         ctx.textAlign = "center"; 
         
+        let startMsg = "Toque no Ecrã para Começar"; // Mensagem para mobile
+        
         if (gameState === 'START') {
             let titleAlpha = 0.6 + 0.4 * Math.sin(Date.now() / 150); 
             ctx.fillStyle = `rgba(241, 196, 15, ${titleAlpha})`; 
             ctx.font = "bold 55px Courier New";
             ctx.fillText("O ARQUIVISTA", 400, 250);
-            
             ctx.fillStyle = "white"; ctx.font = "20px Courier New";
-            ctx.fillText("Pressione ENTER para Começar", 400, 320);
+            ctx.fillText(startMsg, 400, 320);
         } else if (gameState === 'LEVEL_CLEAR') {
             ctx.fillStyle = "#2ecc71"; ctx.font = "bold 40px Courier New";
             ctx.fillText(`NÍVEL ${currentLevel} CONCLUÍDO!`, 400, 250);
             ctx.fillStyle = "white"; ctx.font = "20px Courier New";
-            ctx.fillText("Pressione ENTER para o Próximo Nível", 400, 320);
+            ctx.fillText("Toque para o Próximo Nível", 400, 320);
         } else if (gameState === 'GAME_COMPLETED') {
             ctx.fillStyle = "#3498db"; ctx.font = "bold 40px Courier New";
             ctx.fillText("ARQUIVO MESTRE SALVO!", 400, 250);
             ctx.fillStyle = "white"; ctx.font = "20px Courier New";
             ctx.fillText(`Você venceu as 10 Fases com ${score} Pontos!`, 400, 320);
-            ctx.fillText("Pressione ENTER para Jogar Novamente", 400, 370);
+            ctx.fillText("Toque para Jogar Novamente", 400, 370);
         } else if (gameState === 'GAMEOVER') {
             ctx.fillStyle = "#e74c3c"; ctx.font = "bold 45px Courier New";
             ctx.fillText("FIM DE JOGO", 400, 250);
             ctx.fillStyle = "white"; ctx.font = "20px Courier New";
-            ctx.fillText("Pressione ENTER para Tentar Novamente", 400, 320);
+            ctx.fillText("Toque para Tentar Novamente", 400, 320);
         }
     }
     requestAnimationFrame(gameLoop);
