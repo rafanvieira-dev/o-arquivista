@@ -41,7 +41,7 @@ class Enemy {
     }
 }
 
-// OS NOVOS NPCs AMIGÁVEIS E GIGANTES
+// NOVA CLASSE: NPCs (Personagens Amigáveis)
 class NPC {
     constructor(x, y, type) {
         this.x = x;
@@ -49,30 +49,26 @@ class NPC {
         this.type = type;
         this.width = 40;
         this.height = 75; // Altura humana
-        
-        // Fixo no primeiro frame do topo para evitar "glitches" da IA
         this.frameX = 0; 
-        this.animRow = 0; 
-
-        // Assumimos que a IA gerou grelhas de 4x4 para todos
-        this.cols = 4; 
-        this.rows = 4; 
-
+        
+        // CORREÇÃO: Colunas e Linhas dinâmicas para respeitar a imagem de cada um!
         if (type === 'flavio') {
+            this.cols = 6; this.rows = 2; this.animRow = 1;
             this.image = assets.flavio;
             this.message = "Excelente trabalho, Arquivista!";
         } else if (type === 'rosale') {
+            this.cols = 4; this.rows = 2; this.animRow = 1;
             this.image = assets.rosale;
             this.message = "Obrigada por trazer os arquivos!";
         } else if (type === 'eliezer') {
+            this.cols = 4; this.rows = 2; this.animRow = 1;
             this.image = assets.eliezer;
             this.message = "Os registos estão seguros aqui.";
         }
     }
 
     update(deltaTime) {
-        // Como a IA não faz frames sequenciais perfeitos, nós não mudamos de frame!
-        // O efeito de vida será feito na função draw (respiração).
+        // Efeito de respiração tratado dinamicamente no draw
     }
 
     draw(ctx, cameraX) {
@@ -81,7 +77,6 @@ class NPC {
         let cellW = Math.floor(this.image.naturalWidth / this.cols);
         let cellH = Math.floor(this.image.naturalHeight / this.rows);
         
-        // O SEGREDO DO TAMANHO: Cortar o espaço vazio que a IA deixa nas bordas
         let trimX = Math.floor(cellW * 0.28); 
         let trimY = Math.floor(cellH * 0.05); 
         
@@ -90,18 +85,17 @@ class NPC {
         let sW = Math.floor(cellW - (trimX * 2));
         let sH = Math.floor(cellH - (trimY * 2));
 
-        // Tamanho de desenho humano (Maior para se destacar)
         let drawW = 105; 
         let drawH = 105;
         let drawX = Math.floor(this.x - cameraX - (drawW - this.width) / 2);
         
-        // Efeito de Respiração (Sobe e desce suavemente para não parecer uma estátua dura)
+        // Animação de respiração contínua e suave
         let respiracao = Math.sin(Date.now() / 250) * 2;
         let drawY = Math.floor(this.y - (drawH - this.height) + 15 + respiracao); 
 
         ctx.drawImage(this.image, sX, sY, sW, sH, drawX, drawY, drawW, drawH);
 
-        // Balão de fala
+        // Desenha o Balão de Fala quando o jogador se aproxima
         if (drawX > -100 && drawX < 900) {
             ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
             ctx.fillRect(drawX - 70, drawY - 35, 260, 25);
