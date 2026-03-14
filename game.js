@@ -47,7 +47,7 @@ function salvarProgresso() {
     });
 }
 
-// ====== CÓDIGO DO JOGO ======
+// ====== SISTEMA BASE DO JOGO ======
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const titleElement = document.getElementById('game-title');
@@ -57,16 +57,17 @@ const scoreDisplay = document.getElementById('scoreDisplay');
 const healthDisplay = document.getElementById('healthDisplay');
 const timerDisplay = document.getElementById('timerDisplay');
 
-// CARREGA TODOS OS RECURSOS GRÁFICOS INCLUINDO NPCS
+// CARREGAMENTO DAS IMAGENS (Incluindo o igorgak)
 const assets = { 
     bg: new Image(), arm: new Image(), doc: new Image(),
-    flavio: new Image(), rosale: new Image(), eliezer: new Image()
+    flavio: new Image(), rosale: new Image(), eliezer: new Image(), igorgak: new Image()
 };
 assets.arm.src = 'assets/sprites/armario.png';
 assets.doc.src = 'assets/sprites/documento.png';
 assets.flavio.src = 'assets/sprites/flavio.png';
 assets.rosale.src = 'assets/sprites/rosale.png';
 assets.eliezer.src = 'assets/sprites/eliezer.png';
+assets.igorgak.src = 'assets/sprites/igorgak.png';
 
 let player, cameraX, score, health, timer, timerAccumulator, gameState;
 let currentLevel = 1;
@@ -137,8 +138,8 @@ window.addEventListener('touchcancel', handleTouch, { passive: false });
 function initLevel(lvl) {
     levelData = generateLevel(lvl);
     assets.bg.src = levelData.bgImage; 
-    
-    // INICIA O NPC DA FASE
+
+    // INICIALIZA O NPC DA FASE
     if (levelData.npc) {
         levelData.npcInstance = new NPC(levelData.npc.x, levelData.npc.y, levelData.npc.type);
     }
@@ -261,7 +262,6 @@ function gameLoop(timeStamp) {
         ctx.fillStyle = "white"; ctx.font = "bold 20px Courier New";
         ctx.fillText("PROXIMA FASE", f.x - cameraX + 10, f.y - 10);
 
-        // DESENHA O NPC NA FASE SE ELE EXISTIR
         if (levelData.npcInstance) {
             levelData.npcInstance.update(deltaTime);
             levelData.npcInstance.draw(ctx, cameraX);
