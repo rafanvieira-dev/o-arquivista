@@ -21,7 +21,7 @@ class Enemy {
     }
 
     draw(ctx, cameraX) {
-        if (!this.image.complete) return;
+        if (!this.image.complete || this.image.naturalWidth === 0) return;
         let sWidth = this.image.width / 4;
         let sHeight = this.image.height / 4;
         
@@ -41,9 +41,8 @@ class Enemy {
     }
 }
 
-// Ratos perfeitamente no chão (500 - 50 = 450)
 const enemiesList = [
-    new Enemy(600, 450, 150),
-    new Enemy(1450, 450, 100),
-    new Enemy(2200, 450, 200)
+    new Enemy(600, FLOOR_Y - 50, 150),
+    new Enemy(1450, FLOOR_Y - 50, 100),
+    new Enemy(2200, FLOOR_Y - 50, 200)
 ];
