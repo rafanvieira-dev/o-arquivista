@@ -79,7 +79,6 @@ window.addEventListener('keydown', e => {
     if (e.code === 'ArrowRight') keys.right = true;
     if (e.code === 'Space') { if (!keys.up) jumpJustPressed = true; keys.up = true; }
     
-    // NOVA REGRA DO PORTAL PELO TECLADO
     if (e.code === 'Enter') {
         if (gameState === 'PLAYING' && player.canExit) {
             gameState = 'LEVEL_CLEAR';
@@ -122,7 +121,6 @@ function handleTouch(e) {
         return;
     }
     
-    // NOVA REGRA DO PORTAL PELO TOQUE NO CELULAR
     if (gameState === 'PLAYING' && player.canExit && e.type === 'touchstart') {
         gameState = 'LEVEL_CLEAR';
         salvarProgresso();
@@ -231,25 +229,23 @@ function gameLoop(timeStamp) {
             }
         });
 
+        // MECÂNICA DE RATOS INVENCÍVEIS (Se tocar, perde vida obrigatoriamente)
         levelData.enemies.forEach(enemy => {
             if (isColliding(player, enemy)) {
-                if (player.vy > 0 && player.y + player.height - player.vy <= enemy.y + 20) {
-                    enemy.y = 9999; player.vy = -14; score += 15; updateHUD();
-                } else if (!player.invincible) {
-                    health--; updateHUD(); player.invincible = true;
+                if (!player.invincible) {
+                    health--; updateHUD(); 
+                    player.invincible = true;
                     setTimeout(() => player.invincible = false, 1500); 
                     if (health <= 0) { gameState = 'GAMEOVER'; salvarProgresso(); }
                 }
             }
         });
 
-        // VERIFICA SE ESTÁ NO PORTAL
         player.canExit = isColliding(player, levelData.finishLine);
 
         cameraX = Math.max(0, Math.min(player.x - 400, levelData.finishLine.x - 400));
         ctx.clearRect(0, 0, 800, 600);
 
-        // FUNDO CORRIGIDO: Desenha 100% da imagem (sem corte de 0.85)
         if (assets.bg.complete && assets.bg.naturalHeight > 0) {
             let sWidth = assets.bg.naturalWidth;
             let sHeight = assets.bg.naturalHeight; 
@@ -270,7 +266,6 @@ function gameLoop(timeStamp) {
             if (!it.collected) ctx.drawImage(assets.doc, it.x - cameraX, it.y + floatY, it.width, it.height);
         });
 
-        // DESENHO DO PORTAL COM A MENSAGEM
         let f = levelData.finishLine;
         ctx.fillStyle = `rgba(46, 204, 113, ${0.3 + 0.3 * Math.sin(Date.now() / 200)})`; 
         ctx.fillRect(f.x - cameraX, f.y, f.width, f.height);
@@ -285,14 +280,15 @@ function gameLoop(timeStamp) {
             let txt1 = "APERTE [ENTER]";
             let txt2 = "OU TOQUE P/ PASSAR";
             
-            ctx.strokeText(txt1, f.x - cameraX + f.width/2, f.y + 120);
-            ctx.fillText(txt1, f.x - cameraX + f.width/2, f.y + 120);
+            // AVISO SUBIDO! Agora flutua por cima do portal e do NPC
+            ctx.strokeText(txt1, f.x - cameraX + f.width/2, f.y - 40);
+            ctx.fillText(txt1, f.x - cameraX + f.width/2, f.y - 40);
             
-            ctx.strokeText(txt2, f.x - cameraX + f.width/2, f.y + 150);
-            ctx.fillText(txt2, f.x - cameraX + f.width/2, f.y + 150);
+            ctx.strokeText(txt2, f.x - cameraX + f.width/2, f.y - 15);
+            ctx.fillText(txt2, f.x - cameraX + f.width/2, f.y - 15);
         } else {
             ctx.fillStyle = "white"; ctx.font = "bold 20px Courier New";
-            ctx.fillText("PORTAL", f.x - cameraX + f.width/2, f.y - 10);
+            ctx.fillText("PORTAL", f.x - cameraX + f.width/2, f.y - 20);
         }
 
         if (levelData.npcInstance) {
