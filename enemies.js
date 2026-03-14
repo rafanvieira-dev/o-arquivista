@@ -41,14 +41,12 @@ class Enemy {
     }
 }
 
-// NPCs (Amigáveis com Balão de Fala)
 class NPC {
     constructor(x, y, type) {
         this.x = x;
         this.y = y;
         this.type = type;
         
-        // Mesmas dimensões da hitbox do player
         this.width = 30;
         this.height = 75; 
         
@@ -65,34 +63,30 @@ class NPC {
             this.image = assets.eliezer;
             this.message = "Os registos estão seguros aqui.";
         } else if (type === 'igorgak') {
-            // O NOVO NPC IGOR!
             this.image = assets.igorgak;
             this.message = "Ótima catalogação de documentos!";
         }
     }
 
-    update(deltaTime) {
-        // Estátua absoluta (1 frame)
-    }
+    update(deltaTime) {}
 
     draw(ctx, cameraX) {
         if (!this.image || !this.image.complete || this.image.naturalWidth === 0) return;
 
         let sW = this.image.naturalWidth;
         let sH = this.image.naturalHeight;
-        let sX = 0;
-        let sY = 0;
+        let sX = 0; let sY = 0;
 
-        // PROPORÇÕES PERFEITAS
-        let drawH = 95; 
+        // BEM MAIORES AGORA! Altura foi de 95 para 145!
+        let drawH = 145; 
         let drawW = Math.floor(drawH * (sW / sH)); 
         
         let drawX = Math.floor(this.x - cameraX - (drawW - this.width) / 2);
-        let drawY = Math.floor(this.y - (drawH - this.height) + 18); 
+        // O +18 compensa o sapato do player para que o NPC pise exatamente no mesmo sítio
+        let drawY = Math.floor((this.y + this.height) + 18 - drawH); 
 
         ctx.drawImage(this.image, sX, sY, sW, sH, drawX, drawY, drawW, drawH);
 
-        // DESENHO DO BALÃO DE FALA
         if (drawX > -100 && drawX < 900) {
             let bubbleW = 280;
             let bubbleH = 30;
