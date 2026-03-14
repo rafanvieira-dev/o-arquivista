@@ -2,12 +2,12 @@ class Enemy {
     constructor(x, y, patrolDistance) {
         this.startX = x; 
         this.startY = y;
-        // Hitbox MUITO maior para a colisão ser justa
+        // Hitbox enorme para punir quem encostar de lado
         this.width = 65; 
         this.height = 40; 
         this.x = x; 
         this.y = y; 
-        this.vx = 3; // Ratos mais rápidos
+        this.vx = 3.5; // Ratos muito rápidos!
         this.patrolDistance = patrolDistance;
         this.facing = 1;
         this.image = new Image(); 
@@ -23,21 +23,20 @@ class Enemy {
             this.facing = (this.vx > 0) ? 1 : -1;
         }
         this.frameTimer += deltaTime;
-        if (this.frameTimer > 70) { 
+        if (this.frameTimer > 60) { 
             this.frameX = (this.frameX + 1) % 4; 
             this.frameTimer = 0; 
         }
     }
 
     draw(ctx, cameraX) {
-        if (!this.image.complete) return;
+        if (!this.image.complete || this.image.naturalWidth === 0) return;
         let sWidth = this.image.width / 4;
         let sHeight = this.image.height / 4;
         
-        // Desenho visual muito maior
+        // Desenho do rato na tela muito maior
         let drawW = 100; 
         let drawH = 65; 
-        
         let drawX = this.x - cameraX - (drawW - this.width) / 2;
         let drawY = this.y - (drawH - this.height);
 
