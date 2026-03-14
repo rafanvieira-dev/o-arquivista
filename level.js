@@ -3,6 +3,9 @@ const FLOOR_Y = 560;
 function generateLevel(levelNumber) {
     const levelLength = 2500 + (levelNumber * 800); 
     
+    // CARREGA O FICHEIRO EXATO DA FASE ATUAL!
+    let backgroundToUse = `assets/sprites/fundo${levelNumber}.png`;
+    
     let platforms = [{ x: 0, y: FLOOR_Y, width: levelLength + 800, height: 40, type: 'chao_invisivel' }];
     let items = [];
     let enemies = [];
@@ -31,6 +34,7 @@ function generateLevel(levelNumber) {
     }
 
     return {
+        bgImage: backgroundToUse, // Passa a imagem correta para o motor do jogo
         platforms: platforms,
         items: items,
         enemies: enemies,
