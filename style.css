@@ -2,7 +2,7 @@
     margin: 0; 
     padding: 0; 
     box-sizing: border-box; 
-    touch-action: none; /* Impede zoom no telemóvel */
+    touch-action: none;
     user-select: none;
 }
 
@@ -17,7 +17,6 @@ body {
     overflow: hidden; 
 }
 
-/* Mantém a proporção exata de 4:3 do jogo */
 #game-wrapper { 
     position: relative; 
     width: 100%;
@@ -57,7 +56,7 @@ canvas {
 
 #game-title {
     position: absolute;
-    top: 30%;
+    top: 15%; /* Subimos o título para caberem os recordes */
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: clamp(30px, 8vw, 60px);
