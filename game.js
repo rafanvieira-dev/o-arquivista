@@ -4,13 +4,12 @@ const scoreDisplay = document.getElementById('scoreDisplay');
 const healthDisplay = document.getElementById('healthDisplay');
 const timerDisplay = document.getElementById('timerDisplay');
 
-// CARREGAMENTO SEGURO DE IMAGENS
 const assets = { bg: new Image(), arm: new Image(), doc: new Image() };
-assets.bg.src = 'assets/sprites/fundo.png'; // <- Fundo maravilhoso que você subiu
+assets.bg.src = 'assets/sprites/fundo.png'; 
 assets.arm.src = 'assets/sprites/armario.png';
 assets.doc.src = 'assets/sprites/documento.png';
 
-let player = new Player(100, FLOOR_Y - 80);
+let player = new Player(100, 300);
 let cameraX = 0; let score = 0; let health = 3; let gameState = 'START';
 let timeLeft = 190; let timerAccumulator = 0; let lastTime = 0;
 
@@ -33,7 +32,7 @@ window.addEventListener('keyup', e => {
 });
 
 function resetGame() {
-    player = new Player(100, FLOOR_Y - 80);
+    player = new Player(100, 300);
     score = 0; health = 3; timeLeft = 190; gameState = 'PLAYING';
     scoreDisplay.innerText = `Documentos: ${score}`;
     healthDisplay.innerText = `Vidas: ${health}`;
@@ -71,17 +70,13 @@ function applyPhysics() {
 }
 
 function drawBackground() {
-    // Garante que o jogo não crashe se a imagem demorar a carregar
     if (assets.bg.complete && assets.bg.naturalWidth > 0) {
         let ratio = 600 / assets.bg.naturalHeight;
         let bgWidth = assets.bg.naturalWidth * ratio;
-        
-        // Desenha a imagem repetida lado a lado
         for(let i = 0; i < 5000; i += bgWidth) { 
             ctx.drawImage(assets.bg, i - cameraX, 0, bgWidth, 600);
         }
     } else {
-        // Se a imagem não carregou, desenha cinza
         ctx.fillStyle = "#1e272e"; ctx.fillRect(0, 0, 800, 600);
     }
 }
@@ -107,21 +102,21 @@ function gameLoop(timeStamp) {
 
         cameraX = Math.max(0, Math.min(player.x - 400, 4200));
 
-        // 1. Desenha o seu fundo maravilhoso!
         drawBackground();
 
-        // 2. Desenha os armários
+        // 2. DESENHO DOS ARMÁRIOS (Correção de corte)
         levelData.platforms.forEach(p => {
-            if (p.type === 'chao_invisivel') return; // Não desenha o chão, o fundo já tem a madeira!
+            if (p.type === 'chao_invisivel') return; 
             
             if (assets.arm.complete && assets.arm.naturalWidth > 0) {
-                ctx.drawImage(assets.arm, p.x - cameraX, p.y, p.width, p.height);
+                // A MÁGICA AQUI: p.height + 10 faz com que o armário passe da linha da colisão e enterre no chão, evitando qualquer folga ou falha visual!
+                ctx.drawImage(assets.arm, p.x - cameraX, p.y, p.width, p.height + 10);
             } else { 
                 ctx.fillStyle = "#34495e"; ctx.fillRect(p.x - cameraX, p.y, p.width, p.height); 
             }
         });
 
-        // 3. Desenha Documentos a brilhar e flutuar
+        // 3. Desenha Documentos a brilhar
         let animTime = Date.now();
         let floatY = Math.sin(animTime / 200) * 5; 
         levelData.items.forEach(it => {
@@ -137,7 +132,7 @@ function gameLoop(timeStamp) {
             }
         });
 
-        // 4. Portal de Saída
+        // 4. Portal
         let finish = levelData.finishLine;
         let pulse = Math.abs(Math.sin(Date.now() / 300)) * 0.5 + 0.3;
         ctx.fillStyle = `rgba(46, 204, 113, ${pulse})`; 
@@ -146,15 +141,13 @@ function gameLoop(timeStamp) {
         ctx.fillStyle = "white"; ctx.font = "bold 20px Courier New"; ctx.textAlign = "center";
         ctx.fillText("SAÍDA", finish.x - cameraX + finish.width/2, finish.y - 15);
 
-        // 5. Inimigos e Jogador
         enemiesList.forEach(e => e.draw(ctx, cameraX));
         player.draw(ctx, cameraX);
 
     } else {
-        // TELA DE INÍCIO / GAME OVER
-        drawBackground(); // Desenha o cenário por trás do menu!
+        drawBackground(); 
         
-        ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0,0,800,600); // Película escura
+        ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0,0,800,600); 
         ctx.fillStyle = "white"; ctx.font = "bold 40px Courier New"; ctx.textAlign = "center";
         ctx.fillText(gameState === 'START' ? "O ARQUIVISTA" : (gameState === 'WIN' ? "ARQUIVO SALVO!" : "FIM DE JOGO"), 400, 300);
         ctx.font = "20px Courier New"; ctx.fillText("Pressione ENTER para começar", 400, 350);
