@@ -16,9 +16,10 @@ class Player {
         this.maxJumps = 2;
 
         this.image = new Image(); 
+        // Confirme que o nome do ficheiro está correto
         this.image.src = 'assets/sprites/arquivista.png'; 
         
-        this.frameX = 1; // Começa no frame seguro
+        this.frameX = 0; 
         this.frameY = 0; 
         this.frameTimer = 0;
     }
@@ -40,27 +41,25 @@ class Player {
 
         this.vy += this.gravity;
 
-        // LÓGICA DA FOLHA DE SPRITES 7x4
+        // --- LÓGICA DA GRELHA 4x4 ---
         if (!this.grounded) {
-            this.frameY = 2; // Linha de Pulo
-            // Frames de subida, pico e queda
-            if (this.vy < -5) this.frameX = 2;
-            else if (this.vy > 5) this.frameX = 4;
-            else this.frameX = 3;
+            this.frameY = 3; // Linha 4 (Pulo/Queda)
+            if (this.vy < 0) this.frameX = 1; // Frame subindo
+            else this.frameX = 2; // Frame caindo
         } 
         else if (this.vx !== 0) {
-            this.frameY = 1; // Linha de Corrida
+            this.frameY = 2; // Linha 3 (Corrida)
             this.frameTimer += deltaTime;
-            if (this.frameTimer > 60) { 
-                this.frameX = (this.frameX >= 6) ? 0 : this.frameX + 1; // 7 frames (0 a 6)
+            if (this.frameTimer > 70) { 
+                this.frameX = (this.frameX + 1) % 4; // Anima de 0 a 3
                 this.frameTimer = 0; 
             }
         } 
         else {
-            // O ESQUEMA FREEZE: Quando está parado, estanca!
-            this.frameY = 0; 
-            this.frameX = 1; // Fixo no frame 1 (o segundo desenho) para não cortar a borda
-            this.frameTimer = 0; // O tempo pára, impedindo qualquer movimento ou "fantasma"
+            // O FREEZE ABSOLUTO: Parado como uma estátua
+            this.frameY = 0; // Linha 1 (Parado)
+            this.frameX = 0; // Fixo no primeiro frame
+            this.frameTimer = 0; 
         }
     }
 
@@ -68,24 +67,25 @@ class Player {
         if (this.invincible && Math.floor(Date.now() / 100) % 2) return;
         if (!this.image.complete || this.image.naturalWidth === 0) return;
         
-        // MATEMÁTICA ESTrita para 7 colunas!
-        let cellW = Math.floor(this.image.naturalWidth / 7);
-        // A imagem tem muito espaço em branco por baixo. Dividir por 5.5 foca no personagem.
-        let cellH = Math.floor(this.image.naturalHeight / 5.5); 
+        // Divide a imagem exata por 4
+        let cellW = Math.floor(this.image.naturalWidth / 4);
+        let cellH = Math.floor(this.image.naturalHeight / 4); 
         
-        // Corte Cirúrgico Anti-Fantasmas (25% das laterais)
+        // Corte de 25% nas laterais para garantir que o braço vizinho não aparece
         let trimX = Math.floor(cellW * 0.25); 
-        let trimY = Math.floor(cellH * 0.15); 
+        let trimY = Math.floor(cellH * 0.05); 
         
         let sX = Math.floor((this.frameX * cellW) + trimX);
         let sY = Math.floor((this.frameY * cellH) + trimY);
         let sW = Math.floor(cellW - (trimX * 2));
-        let sH = Math.floor(cellH - (trimY * 1.5));
+        let sH = Math.floor(cellH - (trimY * 2));
         
-        let drawW = 90; 
-        let drawH = 100;
+        let drawW = 95; 
+        let drawH = 95;
         let drawX = this.x - cameraX - (drawW - this.width) / 2;
-        let drawY = this.y - (drawH - this.height) + 5; // Ajuste da sola no chão
+        
+        // Empurra os pés para tocarem na madeira do novo fundo
+        let drawY = this.y - (drawH - this.height) + 18; 
 
         ctx.save();
         if (this.facing === -1) {
