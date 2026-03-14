@@ -41,34 +41,37 @@ class Enemy {
     }
 }
 
-// NOVA CLASSE: NPCs (Personagens Amigáveis)
+// OS NOVOS NPCs AMIGÁVEIS E DO TAMANHO DO PLAYER
 class NPC {
     constructor(x, y, type) {
         this.x = x;
         this.y = y;
         this.type = type;
-        this.width = 40;
-        this.height = 75; // Altura humana
-        this.frameX = 0; 
         
-        // CORREÇÃO: Colunas e Linhas dinâmicas para respeitar a imagem de cada um!
+        // Mesmas dimensões físicas do player
+        this.width = 30;
+        this.height = 75; 
+        
+        // O FREEZE ABSOLUTO: Fixados no frame 1 (o frame 0 costuma estar cortado nas bordas)
+        this.frameX = 1; 
+        
         if (type === 'flavio') {
-            this.cols = 6; this.rows = 2; this.animRow = 1;
+            this.cols = 6; this.rows = 2; this.animRow = 0;
             this.image = assets.flavio;
             this.message = "Excelente trabalho, Arquivista!";
         } else if (type === 'rosale') {
-            this.cols = 4; this.rows = 2; this.animRow = 1;
+            this.cols = 4; this.rows = 4; this.animRow = 0; // Assumindo grelha 4x4
             this.image = assets.rosale;
             this.message = "Obrigada por trazer os arquivos!";
         } else if (type === 'eliezer') {
-            this.cols = 4; this.rows = 2; this.animRow = 1;
+            this.cols = 4; this.rows = 4; this.animRow = 0; // Assumindo grelha 4x4
             this.image = assets.eliezer;
             this.message = "Os registos estão seguros aqui.";
         }
     }
 
     update(deltaTime) {
-        // Efeito de respiração tratado dinamicamente no draw
+        // Estátua absoluta. Sem respiração, sem mudar de frame.
     }
 
     draw(ctx, cameraX) {
@@ -77,7 +80,8 @@ class NPC {
         let cellW = Math.floor(this.image.naturalWidth / this.cols);
         let cellH = Math.floor(this.image.naturalHeight / this.rows);
         
-        let trimX = Math.floor(cellW * 0.28); 
+        // CORTE SUAVE: Apenas 10% para não lhes arrancar braços!
+        let trimX = Math.floor(cellW * 0.10); 
         let trimY = Math.floor(cellH * 0.05); 
         
         let sX = Math.floor((this.frameX * cellW) + trimX);
@@ -85,17 +89,17 @@ class NPC {
         let sW = Math.floor(cellW - (trimX * 2));
         let sH = Math.floor(cellH - (trimY * 2));
 
-        let drawW = 105; 
-        let drawH = 105;
+        // TAMANHO EXATO DE DESENHO DO PLAYER (95x95)
+        let drawW = 95; 
+        let drawH = 95;
         let drawX = Math.floor(this.x - cameraX - (drawW - this.width) / 2);
         
-        // Animação de respiração contínua e suave
-        let respiracao = Math.sin(Date.now() / 250) * 2;
-        let drawY = Math.floor(this.y - (drawH - this.height) + 15 + respiracao); 
+        // Alinhamento exato para pisarem a madeira ao lado do player
+        let drawY = Math.floor(this.y - (drawH - this.height) + 18); 
 
         ctx.drawImage(this.image, sX, sY, sW, sH, drawX, drawY, drawW, drawH);
 
-        // Desenha o Balão de Fala quando o jogador se aproxima
+        // Balão de fala centrado sobre eles
         if (drawX > -100 && drawX < 900) {
             ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
             ctx.fillRect(drawX - 70, drawY - 35, 260, 25);
