@@ -1,7 +1,7 @@
 class Player {
     constructor(x, y) {
         this.x = x; this.y = y;
-        this.width = 30;  this.height = 70; // Caixa de física enxuta para não trancar
+        this.width = 30;  this.height = 70; // Caixa de colisão enxuta e perfeita
         this.vx = 0; this.vy = 0;
         this.speed = 5; this.jumpForce = -14; this.gravity = 0.8;
         
@@ -9,33 +9,32 @@ class Player {
         this.facing = 1; 
         this.invincible = false;
 
-        // SISTEMA DE DUPLO PULO
+        // Variáveis do Duplo Pulo
         this.jumps = 0; 
         this.maxJumps = 2;
 
-        this.image = new Image(); this.image.src = 'assets/sprites/arquivista.png';
+        this.image = new Image(); 
+        this.image.src = 'assets/sprites/arquivista.png';
         this.frameX = 0; this.frameY = 0; this.frameTimer = 0;
     }
 
     update(keys, deltaTime, jumpJustPressed) {
-        // Horizontal
         if (keys.left) { this.vx = -this.speed; this.facing = -1; }
         else if (keys.right) { this.vx = this.speed; this.facing = 1; }
         else { this.vx = 0; }
 
-        // Recarrega o pulo ao tocar no chão
         if (this.grounded) {
             this.jumps = 0; 
         }
 
-        // LÓGICA DO PULO E DUPLO PULO (Ao Correr)
+        // LÓGICA DO DUPLO PULO
         if (jumpJustPressed) {
             if (this.grounded) {
                 this.vy = this.jumpForce;
                 this.grounded = false;
-                this.jumps = 1; // Deu o 1º pulo
+                this.jumps = 1;
             } else if (this.jumps === 1 && Math.abs(this.vx) > 0) { 
-                // Se já deu 1 pulo e está a correr (vx > 0), pode dar o 2º pulo!
+                // Permite o duplo pulo apenas se estiver em movimento no ar
                 this.vy = this.jumpForce;
                 this.jumps = 2;
             }
@@ -43,10 +42,9 @@ class Player {
 
         this.vy += this.gravity;
 
-        // Animações
-        if (!this.grounded) this.frameY = 2; // Pulando
-        else if (this.vx !== 0) this.frameY = 1; // Correndo
-        else this.frameY = 0; // Parado
+        if (!this.grounded) this.frameY = 2; 
+        else if (this.vx !== 0) this.frameY = 1; 
+        else this.frameY = 0; 
 
         this.frameTimer += deltaTime;
         if (this.frameTimer > 100) { this.frameX = (this.frameX + 1) % 4; this.frameTimer = 0; }
@@ -59,10 +57,10 @@ class Player {
         let sWidth = this.image.width / 4;
         let sHeight = this.image.height / 3;
         
-        // Desenha a imagem centralizada na caixa de física e alinhada pelos pés!
+        // Compensação matemática para o boneco não flutuar
         let drawW = 60; let drawH = 80;
         let drawX = this.x - cameraX - (drawW - this.width) / 2;
-        let drawY = this.y - (drawH - this.height); // Sola do sapato toca exatamente na Hitbox
+        let drawY = this.y - (drawH - this.height);
 
         ctx.save();
         if (this.facing === -1) {
