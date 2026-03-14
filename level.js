@@ -5,13 +5,13 @@ function generateLevel(levelNumber) {
     
     // COMO MUDAR OS FUNDOS:
     // O jogo verifica em qual nível você está e escolhe o nome do ficheiro da imagem!
-    let backgroundToUse = 'assets/sprites/fundo.jpg'; // Fundo Padrão
+    let backgroundToUse = 'assets/sprites/fundo1.png'; // Fundo Padrão
     
     if (levelNumber >= 4 && levelNumber <= 7) {
-        // Para usar isso, guarde uma imagem chamada "fundo2.jpg" na pasta de sprites!
-        // backgroundToUse = 'assets/sprites/fundo2.jpg'; 
+        // Para usar isso, guarde uma imagem chamada "fundo2.png" na pasta de sprites!
+        // backgroundToUse = 'assets/sprites/fundo2.png'; 
     } else if (levelNumber >= 8) {
-        // backgroundToUse = 'assets/sprites/fundo3.jpg';
+        // backgroundToUse = 'assets/sprites/fundo3.png';
     }
     
     let platforms = [{ x: 0, y: FLOOR_Y, width: levelLength + 800, height: 40, type: 'chao_invisivel' }];
