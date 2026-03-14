@@ -16,10 +16,10 @@ class Player {
         this.maxJumps = 2;
 
         this.image = new Image(); 
-        // Confirme que o nome do ficheiro está correto
         this.image.src = 'assets/sprites/arquivista.png'; 
         
-        this.frameX = 0; 
+        // MUDANÇA: Começa logo no frame 1 para não nascer invisível
+        this.frameX = 1; 
         this.frameY = 0; 
         this.frameTimer = 0;
     }
@@ -44,8 +44,8 @@ class Player {
         // --- LÓGICA DA GRELHA 4x4 ---
         if (!this.grounded) {
             this.frameY = 3; // Linha 4 (Pulo/Queda)
-            if (this.vy < 0) this.frameX = 1; // Frame subindo
-            else this.frameX = 2; // Frame caindo
+            if (this.vy < 0) this.frameX = 1; // Subindo
+            else this.frameX = 2; // Caindo
         } 
         else if (this.vx !== 0) {
             this.frameY = 2; // Linha 3 (Corrida)
@@ -56,9 +56,10 @@ class Player {
             }
         } 
         else {
-            // O FREEZE ABSOLUTO: Parado como uma estátua
-            this.frameY = 0; // Linha 1 (Parado)
-            this.frameX = 0; // Fixo no primeiro frame
+            // O FREEZE ABSOLUTO NO FRAME 1
+            // Usamos o frame 1 (o segundo desenho) porque o 0 é engolido pelo corte das bordas
+            this.frameY = 0; 
+            this.frameX = 1; 
             this.frameTimer = 0; 
         }
     }
@@ -67,11 +68,10 @@ class Player {
         if (this.invincible && Math.floor(Date.now() / 100) % 2) return;
         if (!this.image.complete || this.image.naturalWidth === 0) return;
         
-        // Divide a imagem exata por 4
         let cellW = Math.floor(this.image.naturalWidth / 4);
         let cellH = Math.floor(this.image.naturalHeight / 4); 
         
-        // Corte de 25% nas laterais para garantir que o braço vizinho não aparece
+        // Corte de 25% nas laterais (Resolve o problema do braço extra)
         let trimX = Math.floor(cellW * 0.25); 
         let trimY = Math.floor(cellH * 0.05); 
         
@@ -84,7 +84,6 @@ class Player {
         let drawH = 95;
         let drawX = this.x - cameraX - (drawW - this.width) / 2;
         
-        // Empurra os pés para tocarem na madeira do novo fundo
         let drawY = this.y - (drawH - this.height) + 18; 
 
         ctx.save();
