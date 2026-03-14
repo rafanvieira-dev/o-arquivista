@@ -4,9 +4,8 @@ const scoreDisplay = document.getElementById('scoreDisplay');
 const healthDisplay = document.getElementById('healthDisplay');
 const timerDisplay = document.getElementById('timerDisplay');
 
-const assets = { bg: new Image(), arm: new Image(), doc: new Image() };
-// ATENÇÃO: Confirme se guardou a imagem como .jpg ou .png!
-assets.bg.src = 'assets/sprites/fundo.jpg'; 
+const assets = { chao: new Image(), arm: new Image(), doc: new Image() };
+assets.chao.src = 'assets/sprites/chao.png';
 assets.arm.src = 'assets/sprites/armario.png';
 assets.doc.src = 'assets/sprites/documento.png';
 
@@ -45,7 +44,9 @@ function isColliding(a, b) {
     return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
 
+// FÍSICA SEPARADA (X e Y) - Adeus atravessar paredes!
 function applyPhysics() {
+    // 1. Move em X e resolve paredes
     player.x += player.vx;
     for (let plat of levelData.platforms) {
         if (isColliding(player, plat)) {
@@ -54,6 +55,7 @@ function applyPhysics() {
         }
     }
 
+    // 2. Move em Y e resolve chão/tetos
     player.y += player.vy;
     player.grounded = false;
     for (let plat of levelData.platforms) {
@@ -91,28 +93,20 @@ function gameLoop(timeStamp) {
 
         ctx.clearRect(0, 0, 800, 600);
 
-        // NOVO DESENHO DO FUNDO: Move-se a 100% com a câmara para o chão de madeira não "escorregar"
-        if (assets.bg.complete) {
-            // Desenha a imagem repetida lado a lado até cobrir todo o nível (5000px)
-            for(let i = 0; i < 5000; i += 800) { 
-                ctx.drawImage(assets.bg, i - cameraX, 0, 800, 600);
-            }
-        } else {
-            ctx.fillStyle = "#1e272e"; ctx.fillRect(0, 0, 800, 600);
-        }
-
-        // DESENHAR ARMÁRIOS (Ignoramos o tipo 'chao' porque o fundo já tem o chão visual)
+        // Desenhar Chão e Armários
         levelData.platforms.forEach(p => {
-            if (p.type === 'chao') return; // Não desenha nada!
-            
-            if (assets.arm.complete) {
-                ctx.drawImage(assets.arm, p.x - cameraX, p.y, p.width, p.height);
+            if (p.type === 'chao') {
+                if (assets.chao.complete) {
+                    for(let i=0; i<p.width; i+=200) ctx.drawImage(assets.chao, p.x+i-cameraX, p.y, 200, p.height);
+                } else { ctx.fillStyle = "#1e272e"; ctx.fillRect(p.x - cameraX, p.y, p.width, p.height); }
             } else { 
-                ctx.fillStyle = "#34495e"; ctx.fillRect(p.x - cameraX, p.y, p.width, p.height); 
+                if (assets.arm.complete) {
+                    ctx.drawImage(assets.arm, p.x - cameraX, p.y, p.width, p.height);
+                } else { ctx.fillStyle = "#34495e"; ctx.fillRect(p.x - cameraX, p.y, p.width, p.height); }
             }
         });
 
-        // Desenhar Documentos Animados
+        // Desenhar Documentos (Animação flutuante e brilhante)
         let animTime = Date.now();
         let floatY = Math.sin(animTime / 200) * 5; 
         levelData.items.forEach(it => {
@@ -125,7 +119,7 @@ function gameLoop(timeStamp) {
             }
         });
 
-        // Portal de Saída
+        // Portal de Saída Animado
         let finish = levelData.finishLine;
         let pulse = Math.abs(Math.sin(Date.now() / 300)) * 0.5 + 0.3;
         ctx.fillStyle = `rgba(46, 204, 113, ${pulse})`; 
