@@ -36,12 +36,14 @@ function generateLevel(levelNumber) {
     }
 
     let npcType;
-    let mod = levelNumber % 3;
+    // AGORA TEMOS 4 PERSONAGENS!
+    let mod = levelNumber % 4; 
+    
     if (mod === 1) npcType = 'flavio';
     else if (mod === 2) npcType = 'rosale';
-    else npcType = 'eliezer';
+    else if (mod === 3) npcType = 'eliezer';
+    else npcType = 'igorgak'; // Fases 4, 8...
 
-    // CORREÇÃO AQUI: "FLOOR_Y - 75" garante que eles ficam perfeitamente em cima da madeira!
     let npc = { type: npcType, x: levelLength + 160, y: FLOOR_Y - 75 };
 
     return {
