@@ -43,8 +43,8 @@ function generateLevel(levelNumber) {
     else if (mod === 2) npcType = 'rosale';
     else npcType = 'eliezer';
 
-    // Coloca o NPC perto da linha de chegada
-    let npc = { type: npcType, x: levelLength - 200, y: FLOOR_Y };
+    // CORREÇÃO: Subtraímos a altura do NPC (75) para que ele fique em cima do chão!
+    let npc = { type: npcType, x: levelLength - 200, y: FLOOR_Y - 75 };
 
     return {
         bgImage: backgroundToUse,
