@@ -2,12 +2,11 @@ class Enemy {
     constructor(x, y, patrolDistance) {
         this.startX = x; 
         this.startY = y;
-        // Hitbox enorme para punir quem encostar de lado
         this.width = 65; 
         this.height = 40; 
         this.x = x; 
         this.y = y; 
-        this.vx = 3.5; // Ratos muito rápidos!
+        this.vx = 3.5; 
         this.patrolDistance = patrolDistance;
         this.facing = 1;
         this.image = new Image(); 
@@ -34,7 +33,6 @@ class Enemy {
         let sWidth = this.image.width / 4;
         let sHeight = this.image.height / 4;
         
-        // Desenho do rato na tela muito maior
         let drawW = 100; 
         let drawH = 65; 
         let drawX = this.x - cameraX - (drawW - this.width) / 2;
