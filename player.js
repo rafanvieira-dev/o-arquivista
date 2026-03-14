@@ -2,21 +2,16 @@ class Player {
     constructor(x, y) {
         this.x = x; 
         this.y = y;
-        
-        // Caixa de física (Hitbox)
-        this.width = 32;  
-        this.height = 78; 
-        
+        this.width = 30;  
+        this.height = 75; 
         this.vx = 0; 
         this.vy = 0;
         this.speed = 6; 
         this.jumpForce = -15; 
         this.gravity = 0.8;
-        
         this.grounded = false; 
         this.facing = 1; 
         this.invincible = false;
-
         this.jumps = 0; 
         this.maxJumps = 2;
 
@@ -30,14 +25,12 @@ class Player {
     }
 
     update(keys, deltaTime, jumpJustPressed) {
-        // Movimento Horizontal
         if (keys.left) { this.vx = -this.speed; this.facing = -1; }
         else if (keys.right) { this.vx = this.speed; this.facing = 1; }
         else { this.vx = 0; }
 
         if (this.grounded) { this.jumps = 0; }
 
-        // Lógica de Pulo
         if (jumpJustPressed) {
             if (this.grounded) {
                 this.vy = this.jumpForce;
@@ -51,19 +44,14 @@ class Player {
 
         this.vy += this.gravity;
 
-        // --- LÓGICA DE ANIMAÇÃO CORRIGIDA ---
+        // --- LÓGICA DE ANIMAÇÃO ---
         if (!this.grounded) {
-            // PULAR / CAIR (Linha 4)
-            this.frameY = 3; 
-            if (this.vy < -2) this.frameX = 1;
-            else if (this.vy > 2) this.frameX = 2;
-            else this.frameX = 1; 
+            this.frameY = 3; // Linha de Pulo/Cair
+            this.frameX = (this.vy < 0) ? 1 : 2; 
         } 
         else if (this.vx !== 0) {
-            // A CORRER (Linha 3)
-            this.frameY = 2; 
+            this.frameY = 2; // Linha de Corrida (Linha 3)
             this.maxFrame = 3; 
-            
             this.frameTimer += deltaTime;
             if (this.frameTimer > 80) { 
                 this.frameX = (this.frameX >= this.maxFrame) ? 0 : this.frameX + 1;
@@ -71,10 +59,8 @@ class Player {
             }
         } 
         else {
-            // PARADO (Linha 1)
-            this.frameY = 0; 
-            // CONGELAR: Forçamos o frame a ser sempre 0 para não mudar de posição
-            this.frameX = 0; 
+            this.frameY = 0; // Linha Parado
+            this.frameX = 0; // CONGELADO no primeiro frame para não tremer
             this.frameTimer = 0; 
         }
     }
@@ -83,30 +69,32 @@ class Player {
         if (this.invincible && Math.floor(Date.now() / 100) % 2) return;
         if (!this.image.complete || this.image.naturalWidth === 0) return;
         
-        // Corte 4x4 baseado na imagem
         let cellW = this.image.naturalWidth / 4;
         let cellH = this.image.naturalHeight / 4; 
         
-        let sX = this.frameX * cellW;
+        // --- CORTE DE SEGURANÇA (Anti-Fantasma) ---
+        // Ignora 10% de cada lado do frame para não mostrar o boneco vizinho
+        let trimX = cellW * 0.10;
+        let sX = (this.frameX * cellW) + trimX;
         let sY = this.frameY * cellH;
+        let sW = cellW - (trimX * 2);
+        let sH = cellH;
         
-        // Tamanho no ecrã
         let drawW = 100; 
         let drawH = 100;
-        
         let drawX = this.x - cameraX - (drawW - this.width) / 2;
         
-        // Alinhamento exato dos pés com o chão e armários
-        let ajusteDosPes = 12; 
+        // Ajuste para os pés tocarem a madeira conforme o seu print
+        let ajusteDosPes = 30; 
         let drawY = this.y - (drawH - this.height) + ajusteDosPes;
 
         ctx.save();
         if (this.facing === -1) {
             ctx.translate(drawX + drawW / 2, drawY);
             ctx.scale(-1, 1);
-            ctx.drawImage(this.image, sX, sY, cellW, cellH, -drawW / 2, 0, drawW, drawH);
+            ctx.drawImage(this.image, sX, sY, sW, sH, -drawW / 2, 0, drawW, drawH);
         } else {
-            ctx.drawImage(this.image, sX, sY, cellW, cellH, drawX, drawY, drawW, drawH);
+            ctx.drawImage(this.image, sX, sY, sW, sH, drawX, drawY, drawW, drawH);
         }
         ctx.restore();
     }
