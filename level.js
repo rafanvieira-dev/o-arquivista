@@ -41,9 +41,8 @@ function generateLevel(levelNumber) {
     else if (mod === 2) npcType = 'rosale';
     else npcType = 'eliezer';
 
-    // A MÁGICA AQUI: O portal (finishLine) começa em 'levelLength' e tem 120 de largura. 
-    // Colocamos o NPC no 'levelLength + 160' para ele ficar perfeitamente à espera DEPOIS da porta!
-    let npc = { type: npcType, x: levelLength + 160, y: FLOOR_Y };
+    // CORREÇÃO AQUI: "FLOOR_Y - 75" garante que eles ficam perfeitamente em cima da madeira!
+    let npc = { type: npcType, x: levelLength + 160, y: FLOOR_Y - 75 };
 
     return {
         bgImage: backgroundToUse,
