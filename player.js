@@ -18,20 +18,18 @@ class Player {
         this.image = new Image(); 
         this.image.src = 'assets/sprites/arquivista.png'; 
         
-        this.frameX = 0; 
+        this.frameX = 1; // Começa no frame seguro
         this.frameY = 0; 
         this.frameTimer = 0;
     }
 
     update(keys, deltaTime, jumpJustPressed) {
-        // Movimento Horizontal
         if (keys.left) { this.vx = -this.speed; this.facing = -1; }
         else if (keys.right) { this.vx = this.speed; this.facing = 1; }
         else { this.vx = 0; }
 
         if (this.grounded) { this.jumps = 0; }
 
-        // Pulo e Duplo Pulo
         if (jumpJustPressed) {
             if (this.grounded) {
                 this.vy = this.jumpForce; this.grounded = false; this.jumps = 1;
@@ -42,28 +40,27 @@ class Player {
 
         this.vy += this.gravity;
 
-        // --- SISTEMA DE ANIMAÇÃO ---
+        // LÓGICA DA FOLHA DE SPRITES 7x4
         if (!this.grounded) {
-            this.frameY = 3; // Linha de Pulo
-            this.frameTimer += deltaTime;
-            if (this.frameTimer > 100) {
-                this.frameX = (this.frameX + 1) % 4;
-                this.frameTimer = 0;
-            }
+            this.frameY = 2; // Linha de Pulo
+            // Frames de subida, pico e queda
+            if (this.vy < -5) this.frameX = 2;
+            else if (this.vy > 5) this.frameX = 4;
+            else this.frameX = 3;
         } 
         else if (this.vx !== 0) {
-            this.frameY = 2; // Linha de Correr
+            this.frameY = 1; // Linha de Corrida
             this.frameTimer += deltaTime;
-            if (this.frameTimer > 80) { 
-                this.frameX = (this.frameX + 1) % 4; 
+            if (this.frameTimer > 60) { 
+                this.frameX = (this.frameX >= 6) ? 0 : this.frameX + 1; // 7 frames (0 a 6)
                 this.frameTimer = 0; 
             }
         } 
         else {
-            // O ESQUEMA FREEZE: Personagem parado
+            // O ESQUEMA FREEZE: Quando está parado, estanca!
             this.frameY = 0; 
-            this.frameX = 0; // Congela ABSOLUTAMENTE no primeiro frame
-            this.frameTimer = 0; // O tempo pára de contar para não haver animação
+            this.frameX = 1; // Fixo no frame 1 (o segundo desenho) para não cortar a borda
+            this.frameTimer = 0; // O tempo pára, impedindo qualquer movimento ou "fantasma"
         }
     }
 
@@ -71,23 +68,24 @@ class Player {
         if (this.invincible && Math.floor(Date.now() / 100) % 2) return;
         if (!this.image.complete || this.image.naturalWidth === 0) return;
         
-        // CORTE MATEMÁTICO PERFEITO E SEGURO
-        let cellW = Math.floor(this.image.naturalWidth / 4);
-        let cellH = Math.floor(this.image.naturalHeight / 4); 
+        // MATEMÁTICA ESTrita para 7 colunas!
+        let cellW = Math.floor(this.image.naturalWidth / 7);
+        // A imagem tem muito espaço em branco por baixo. Dividir por 5.5 foca no personagem.
+        let cellH = Math.floor(this.image.naturalHeight / 5.5); 
         
-        // Corte agressivo de 28% nas laterais para focar só no centro
-        let trimX = Math.floor(cellW * 0.28); 
-        let trimY = Math.floor(cellH * 0.05); 
+        // Corte Cirúrgico Anti-Fantasmas (25% das laterais)
+        let trimX = Math.floor(cellW * 0.25); 
+        let trimY = Math.floor(cellH * 0.15); 
         
         let sX = Math.floor((this.frameX * cellW) + trimX);
         let sY = Math.floor((this.frameY * cellH) + trimY);
         let sW = Math.floor(cellW - (trimX * 2));
-        let sH = Math.floor(cellH - (trimY * 2));
+        let sH = Math.floor(cellH - (trimY * 1.5));
         
-        let drawW = 95; 
-        let drawH = 95;
+        let drawW = 90; 
+        let drawH = 100;
         let drawX = this.x - cameraX - (drawW - this.width) / 2;
-        let drawY = this.y - (drawH - this.height) + 22; // Ajuste para pisar no chão
+        let drawY = this.y - (drawH - this.height) + 5; // Ajuste da sola no chão
 
         ctx.save();
         if (this.facing === -1) {
