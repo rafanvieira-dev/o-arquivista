@@ -41,18 +41,17 @@ class Enemy {
     }
 }
 
-// OS NOVOS NPCs AMIGÁVEIS (1 FRAME ÚNICO)
+// NPCs (Amigáveis com Balão de Fala)
 class NPC {
     constructor(x, y, type) {
         this.x = x;
         this.y = y;
         this.type = type;
         
-        // Mesmas dimensões físicas do player
+        // Mesmas dimensões da hitbox do player
         this.width = 30;
         this.height = 75; 
         
-        // Agora o código sabe que a imagem tem apenas 1 frame!
         this.cols = 1;
         this.rows = 1;
         
@@ -69,39 +68,67 @@ class NPC {
     }
 
     update(deltaTime) {
-        // Estátua absoluta. Como só tem 1 frame, não fazemos update de animação.
+        // Estátua absoluta (1 frame)
     }
 
     draw(ctx, cameraX) {
         if (!this.image || !this.image.complete || this.image.naturalWidth === 0) return;
 
-        // Pega na largura e altura totais da imagem (já que é só 1 frame)
         let sW = this.image.naturalWidth;
         let sH = this.image.naturalHeight;
-        
-        // Começa a desenhar desde o ponto 0x0 da imagem original
         let sX = 0;
         let sY = 0;
 
-        // TAMANHO EXATO DE DESENHO DO PLAYER (95x95)
-        let drawW = 95; 
-        let drawH = 95;
-        let drawX = Math.floor(this.x - cameraX - (drawW - this.width) / 2);
+        // PROPORÇÕES PERFEITAS: Altura cravada em 95px (exatamente igual ao Player). 
+        // A largura adapta-se matematicamente para a imagem não esticar!
+        let drawH = 95; 
+        let drawW = Math.floor(drawH * (sW / sH)); 
         
-        // Alinhamento exato para pisarem a madeira ao lado do player
+        let drawX = Math.floor(this.x - cameraX - (drawW - this.width) / 2);
         let drawY = Math.floor(this.y - (drawH - this.height) + 18); 
 
-        // Desenha a imagem inteira no ecrã
         ctx.drawImage(this.image, sX, sY, sW, sH, drawX, drawY, drawW, drawH);
 
-        // Balão de fala centrado sobre eles
+        // DESENHO DO BALÃO DE FALA
         if (drawX > -100 && drawX < 900) {
-            ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-            ctx.fillRect(drawX - 70, drawY - 35, 260, 25);
-            ctx.fillStyle = "white";
+            let bubbleW = 280;
+            let bubbleH = 30;
+            let bubbleX = drawX + (drawW / 2) - (bubbleW / 2);
+            let bubbleY = drawY - bubbleH - 25; // Sobe para não tapar a cabeça
+
+            ctx.fillStyle = "rgba(255, 255, 255, 0.95)"; // Branco opaco
+            ctx.strokeStyle = "#000"; // Borda preta
+            ctx.lineWidth = 2;
+
+            // Retângulo arredondado do balão
+            ctx.beginPath();
+            ctx.roundRect(bubbleX, bubbleY, bubbleW, bubbleH, 8); 
+            ctx.fill();
+            ctx.stroke();
+
+            // O bico do balão apontando para o NPC
+            ctx.beginPath();
+            ctx.moveTo(drawX + (drawW / 2) - 8, bubbleY + bubbleH);
+            ctx.lineTo(drawX + (drawW / 2) + 8, bubbleY + bubbleH);
+            ctx.lineTo(drawX + (drawW / 2), bubbleY + bubbleH + 12);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Apagar o traço que divide o bico do balão
+            ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+            ctx.beginPath();
+            ctx.moveTo(drawX + (drawW / 2) - 7, bubbleY + bubbleH - 1);
+            ctx.lineTo(drawX + (drawW / 2) + 7, bubbleY + bubbleH - 1);
+            ctx.lineTo(drawX + (drawW / 2), bubbleY + bubbleH + 11);
+            ctx.closePath();
+            ctx.fill();
+
+            // Texto dentro do Balão
+            ctx.fillStyle = "#000";
             ctx.font = "bold 13px Courier New";
             ctx.textAlign = "center";
-            ctx.fillText(this.message, drawX + 60, drawY - 18);
+            ctx.fillText(this.message, drawX + (drawW / 2), bubbleY + 20);
         }
     }
 }
