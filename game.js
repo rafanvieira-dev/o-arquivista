@@ -1,4 +1,3 @@
-// ====== CONFIGURAÇÃO FIREBASE ======
 const firebaseConfig = {
     apiKey: "AIzaSyBi9zuGjblDXhXpKLAqf9nTj_Ki-fOar2I",
     authDomain: "o-arquivista-69d2b.firebaseapp.com",
@@ -47,7 +46,6 @@ function salvarProgresso() {
     });
 }
 
-// ====== SISTEMA BASE DO JOGO ======
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const titleElement = document.getElementById('game-title');
@@ -57,7 +55,6 @@ const scoreDisplay = document.getElementById('scoreDisplay');
 const healthDisplay = document.getElementById('healthDisplay');
 const timerDisplay = document.getElementById('timerDisplay');
 
-// CARREGAMENTO DAS IMAGENS (Incluindo o igorgak)
 const assets = { 
     bg: new Image(), arm: new Image(), doc: new Image(),
     flavio: new Image(), rosale: new Image(), eliezer: new Image(), igorgak: new Image()
@@ -81,7 +78,16 @@ window.addEventListener('keydown', e => {
     if (e.code === 'ArrowLeft') keys.left = true;
     if (e.code === 'ArrowRight') keys.right = true;
     if (e.code === 'Space') { if (!keys.up) jumpJustPressed = true; keys.up = true; }
-    if (e.code === 'Enter') checkMenuProgression();
+    
+    // NOVA REGRA DO PORTAL PELO TECLADO
+    if (e.code === 'Enter') {
+        if (gameState === 'PLAYING' && player.canExit) {
+            gameState = 'LEVEL_CLEAR';
+            salvarProgresso();
+        } else {
+            checkMenuProgression();
+        }
+    }
 });
 window.addEventListener('keyup', e => {
     if (e.code === 'ArrowLeft') keys.left = false;
@@ -115,6 +121,14 @@ function handleTouch(e) {
         if (e.type === 'touchstart') checkMenuProgression();
         return;
     }
+    
+    // NOVA REGRA DO PORTAL PELO TOQUE NO CELULAR
+    if (gameState === 'PLAYING' && player.canExit && e.type === 'touchstart') {
+        gameState = 'LEVEL_CLEAR';
+        salvarProgresso();
+        return;
+    }
+
     e.preventDefault(); 
     keys.left = false; keys.right = false;
     let isJumping = false;
@@ -139,12 +153,12 @@ function initLevel(lvl) {
     levelData = generateLevel(lvl);
     assets.bg.src = levelData.bgImage; 
 
-    // INICIALIZA O NPC DA FASE
     if (levelData.npc) {
         levelData.npcInstance = new NPC(levelData.npc.x, levelData.npc.y, levelData.npc.type);
     }
     
     player = new Player(100, 300);
+    player.canExit = false;
     cameraX = 0; timer = levelData.timeLimit; timerAccumulator = 0;
     gameState = 'PLAYING';
     levelDisplay.innerText = `Nível: ${currentLevel}`;
@@ -229,16 +243,16 @@ function gameLoop(timeStamp) {
             }
         });
 
-        if (isColliding(player, levelData.finishLine)) {
-            gameState = 'LEVEL_CLEAR'; salvarProgresso();
-        }
+        // VERIFICA SE ESTÁ NO PORTAL
+        player.canExit = isColliding(player, levelData.finishLine);
 
         cameraX = Math.max(0, Math.min(player.x - 400, levelData.finishLine.x - 400));
         ctx.clearRect(0, 0, 800, 600);
 
+        // FUNDO CORRIGIDO: Desenha 100% da imagem (sem corte de 0.85)
         if (assets.bg.complete && assets.bg.naturalHeight > 0) {
             let sWidth = assets.bg.naturalWidth;
-            let sHeight = assets.bg.naturalHeight * 0.85; 
+            let sHeight = assets.bg.naturalHeight; 
             let ratio = 600 / sHeight;
             let bgW = sWidth * ratio;
             for(let i = 0; i < levelData.finishLine.x + 800; i += bgW) {
@@ -256,11 +270,30 @@ function gameLoop(timeStamp) {
             if (!it.collected) ctx.drawImage(assets.doc, it.x - cameraX, it.y + floatY, it.width, it.height);
         });
 
+        // DESENHO DO PORTAL COM A MENSAGEM
         let f = levelData.finishLine;
         ctx.fillStyle = `rgba(46, 204, 113, ${0.3 + 0.3 * Math.sin(Date.now() / 200)})`; 
         ctx.fillRect(f.x - cameraX, f.y, f.width, f.height);
-        ctx.fillStyle = "white"; ctx.font = "bold 20px Courier New";
-        ctx.fillText("PROXIMA FASE", f.x - cameraX + 10, f.y - 10);
+        
+        if (player.canExit) {
+            ctx.fillStyle = "white"; 
+            ctx.font = "bold 18px Courier New";
+            ctx.textAlign = "center";
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 4;
+            
+            let txt1 = "APERTE [ENTER]";
+            let txt2 = "OU TOQUE P/ PASSAR";
+            
+            ctx.strokeText(txt1, f.x - cameraX + f.width/2, f.y + 120);
+            ctx.fillText(txt1, f.x - cameraX + f.width/2, f.y + 120);
+            
+            ctx.strokeText(txt2, f.x - cameraX + f.width/2, f.y + 150);
+            ctx.fillText(txt2, f.x - cameraX + f.width/2, f.y + 150);
+        } else {
+            ctx.fillStyle = "white"; ctx.font = "bold 20px Courier New";
+            ctx.fillText("PORTAL", f.x - cameraX + f.width/2, f.y - 10);
+        }
 
         if (levelData.npcInstance) {
             levelData.npcInstance.update(deltaTime);
