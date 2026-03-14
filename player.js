@@ -7,7 +7,7 @@ class Player {
         this.vx = 0; 
         this.vy = 0;
         this.speed = 6; 
-        this.jumpForce = -15; 
+        this.jumpForce = -15.5; 
         this.gravity = 0.8;
         this.grounded = false; 
         this.facing = 1; 
@@ -32,31 +32,38 @@ class Player {
 
         if (jumpJustPressed) {
             if (this.grounded) {
-                this.vy = this.jumpForce;
-                this.grounded = false;
-                this.jumps = 1;
+                this.vy = this.jumpForce; this.grounded = false; this.jumps = 1;
             } else if (this.jumps === 1 && Math.abs(this.vx) > 0) { 
-                this.vy = this.jumpForce;
-                this.jumps = 2;
+                this.vy = this.jumpForce; this.jumps = 2;
             }
         }
 
         this.vy += this.gravity;
 
-        // Escolha da Linha (Y) na grelha 4x4
-        if (!this.grounded) this.frameY = 3; 
-        else if (this.vx !== 0) this.frameY = 2; 
-        else this.frameY = 0; 
-
-        // Animação apenas em movimento
-        if (this.vx !== 0 || !this.grounded) {
+        // --- SISTEMA DE ANIMAÇÃO ---
+        if (!this.grounded) {
+            this.frameY = 3; // Pulo
             this.frameTimer += deltaTime;
-            if (this.frameTimer > 90) { 
+            if (this.frameTimer > 100) {
+                this.frameX = (this.frameX + 1) % 4;
+                this.frameTimer = 0;
+            }
+        } 
+        else if (this.vx !== 0) {
+            this.frameY = 2; // Correr
+            this.frameTimer += deltaTime;
+            if (this.frameTimer > 80) { 
                 this.frameX = (this.frameX + 1) % 4; 
                 this.frameTimer = 0; 
             }
-        } else {
-            this.frameX = 0; // Congela parado no primeiro frame
+        } 
+        else {
+            this.frameY = 0; // Parado (Respirando/Piscando)
+            this.frameTimer += deltaTime;
+            if (this.frameTimer > 250) { // Animação beeeem lenta
+                this.frameX = (this.frameX + 1) % 4; 
+                this.frameTimer = 0; 
+            }
         }
     }
 
@@ -64,22 +71,22 @@ class Player {
         if (this.invincible && Math.floor(Date.now() / 100) % 2) return;
         if (!this.image.complete || this.image.naturalWidth === 0) return;
         
-        let cellW = this.image.naturalWidth / 4;
-        let cellH = this.image.naturalHeight / 4; 
+        // CORTE MATEMÁTICO PERFEITO E SEGURO (Impede de ver os outros sprites)
+        let cellW = Math.floor(this.image.naturalWidth / 4);
+        let cellH = Math.floor(this.image.naturalHeight / 4); 
         
-        // Corte suave: apenas 1px de segurança para evitar o boneco do lado
-        let sX = (this.frameX * cellW) + 1;
-        let sY = (this.frameY * cellH) + 1;
-        let sW = cellW - 2;
-        let sH = cellH - 2;
+        let trimX = Math.floor(cellW * 0.22); // Corta 22% das laterais
+        let trimY = Math.floor(cellH * 0.05); // Corta 5% de cima/baixo
+        
+        let sX = (this.frameX * cellW) + trimX;
+        let sY = (this.frameY * cellH) + trimY;
+        let sW = cellW - (trimX * 2);
+        let sH = cellH - (trimY * 2);
         
         let drawW = 100; 
         let drawH = 100;
         let drawX = this.x - cameraX - (drawW - this.width) / 2;
-        
-        // Ajuste para pisar na madeira (560px)
-        let ajusteDosPes = 28; 
-        let drawY = this.y - (drawH - this.height) + ajusteDosPes;
+        let drawY = this.y - (drawH - this.height) + 26;
 
         ctx.save();
         if (this.facing === -1) {
