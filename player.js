@@ -1,7 +1,7 @@
 class Player {
     constructor(x, y) {
         this.x = x; this.y = y;
-        this.width = 30;  this.height = 70; // Caixa de colisão enxuta e perfeita
+        this.width = 30;  this.height = 70; 
         this.vx = 0; this.vy = 0;
         this.speed = 5; this.jumpForce = -14; this.gravity = 0.8;
         
@@ -9,7 +9,7 @@ class Player {
         this.facing = 1; 
         this.invincible = false;
 
-        // Variáveis do Duplo Pulo
+        // Duplo Pulo
         this.jumps = 0; 
         this.maxJumps = 2;
 
@@ -23,18 +23,14 @@ class Player {
         else if (keys.right) { this.vx = this.speed; this.facing = 1; }
         else { this.vx = 0; }
 
-        if (this.grounded) {
-            this.jumps = 0; 
-        }
+        if (this.grounded) { this.jumps = 0; }
 
-        // LÓGICA DO DUPLO PULO
         if (jumpJustPressed) {
             if (this.grounded) {
                 this.vy = this.jumpForce;
                 this.grounded = false;
                 this.jumps = 1;
             } else if (this.jumps === 1 && Math.abs(this.vx) > 0) { 
-                // Permite o duplo pulo apenas se estiver em movimento no ar
                 this.vy = this.jumpForce;
                 this.jumps = 2;
             }
@@ -52,12 +48,11 @@ class Player {
 
     draw(ctx, cameraX) {
         if (this.invincible && Math.floor(Date.now() / 100) % 2) return;
-        if (!this.image.complete) return;
+        if (!this.image.complete || this.image.naturalWidth === 0) return;
         
         let sWidth = this.image.width / 4;
         let sHeight = this.image.height / 3;
         
-        // Compensação matemática para o boneco não flutuar
         let drawW = 60; let drawH = 80;
         let drawX = this.x - cameraX - (drawW - this.width) / 2;
         let drawY = this.y - (drawH - this.height);
