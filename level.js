@@ -1,9 +1,8 @@
-const FLOOR_Y = 480;
+const FLOOR_Y = 520; 
 
 const levelData = {
     platforms: [
         { x: 0, y: FLOOR_Y, width: 5000, height: 120, type: 'chao_invisivel' }, 
-        
         { x: 400, y: FLOOR_Y - 100, width: 150, height: 100, type: 'armario' },
         { x: 750, y: FLOOR_Y - 150, width: 200, height: 150, type: 'armario' },
         { x: 1200, y: FLOOR_Y - 200, width: 150, height: 200, type: 'armario' },
