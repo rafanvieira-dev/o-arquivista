@@ -9,7 +9,7 @@ const timerDisplay = document.getElementById('timerDisplay');
 
 const assets = { bg: new Image(), arm: new Image(), doc: new Image() };
 // Imagem com a grelha de 9 cenários! (Mude para .png se o seu ficheiro for png)
-assets.bg.src = 'assets/sprites/fundo.jpg'; 
+assets.bg.src = 'assets/sprites/fundo.png'; 
 assets.arm.src = 'assets/sprites/armario.png';
 assets.doc.src = 'assets/sprites/documento.png';
 
