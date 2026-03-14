@@ -41,7 +41,7 @@ class Enemy {
     }
 }
 
-// A NOVA CLASSE PARA OS SEUS PERSONAGENS!
+// NOVA CLASSE: NPCs (Personagens Amigáveis)
 class NPC {
     constructor(x, y, type) {
         this.x = x;
@@ -52,7 +52,7 @@ class NPC {
         this.frameX = 0;
         this.frameTimer = 0;
 
-        // Configuração exata para a grelha de cada personagem que enviou
+        // Configuração individual das grelhas de cada personagem
         if (type === 'flavio') {
             this.cols = 6; this.rows = 2; this.animRow = 1; this.maxFrames = 6;
             this.image = assets.flavio;
@@ -70,7 +70,7 @@ class NPC {
 
     update(deltaTime) {
         this.frameTimer += deltaTime;
-        if (this.frameTimer > 180) { // Animação suave e calma
+        if (this.frameTimer > 180) { // Animação lenta e suave
             this.frameX = (this.frameX + 1) % this.maxFrames;
             this.frameTimer = 0;
         }
@@ -91,7 +91,7 @@ class NPC {
 
         ctx.drawImage(this.image, sX, sY, cellW, cellH, drawX, drawY, drawW, drawH);
 
-        // Caixa de Diálogo (Balão de Fala) quando estão na ecrã
+        // Desenha o Balão de Fala quando o jogador se aproxima
         if (drawX > -100 && drawX < 900) {
             ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
             ctx.fillRect(drawX - 80, drawY - 35, 260, 25);
