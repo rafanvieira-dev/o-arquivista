@@ -3,6 +3,7 @@ class Player {
         this.x = x; 
         this.y = y;
         
+        // Caixa de física
         this.width = 32;  
         this.height = 78; 
         
@@ -22,7 +23,6 @@ class Player {
         this.image = new Image(); 
         this.image.src = 'assets/sprites/arquivista.png'; 
         
-        // MUDANÇA AQUI: Começa no frame 1 (o segundo boneco) para evitar o corte da borda
         this.frameX = 1; 
         this.frameY = 0; 
         this.frameTimer = 0;
@@ -30,14 +30,12 @@ class Player {
     }
 
     update(keys, deltaTime, jumpJustPressed) {
-        // Movimento Horizontal
         if (keys.left) { this.vx = -this.speed; this.facing = -1; }
         else if (keys.right) { this.vx = this.speed; this.facing = 1; }
         else { this.vx = 0; }
 
         if (this.grounded) { this.jumps = 0; }
 
-        // Lógica do Duplo Pulo
         if (jumpJustPressed) {
             if (this.grounded) {
                 this.vy = this.jumpForce;
@@ -73,10 +71,7 @@ class Player {
         else {
             // PARADO (Linha 1)
             this.frameY = 0; 
-            
-            // A CORREÇÃO MÁGICA: Fixamos no frame 1 em vez do 0! 
-            // Como ele está no meio, a tesoura digital não o corta.
-            this.frameX = 1; 
+            this.frameX = 1; // Fixo no segundo frame
             this.frameTimer = 0; 
         }
     }
@@ -85,24 +80,30 @@ class Player {
         if (this.invincible && Math.floor(Date.now() / 100) % 2) return;
         if (!this.image.complete || this.image.naturalWidth === 0) return;
         
+        // A matemática da grelha: 7 colunas e espaço para 6 linhas (apesar de só usar 4)
         let cellW = this.image.naturalWidth / 7;
-        let cellH = this.image.naturalHeight / 5.5; 
+        let cellH = this.image.naturalHeight / 6; 
         
-        // Corte ultra-preciso
-        let trimX = cellW * 0.25; 
-        let trimY = cellH * 0.18; 
+        // REMOVIDO QUALQUER CORTE! Vamos pegar o quadro exato da imagem.
+        let sX = this.frameX * cellW;
+        let sY = this.frameY * cellH;
+        let sW = cellW;
+        let sH = cellH;
         
-        let sX = (this.frameX * cellW) + trimX;
-        let sY = (this.frameY * cellH) + trimY;
-        let sW = cellW - (trimX * 2);
-        let sH = cellH - (trimY * 1.5); 
+        // O TAMANHO QUE ELE APARECE NO ECRÃ (Maior e proporcional)
+        let drawW = 110; 
+        let drawH = 110;
         
-        // Tamanho de desenho no ecrã do jogo
-        let drawW = 80; 
-        let drawH = 95;
-        
+        // Posicionamento Horizontal (Centrado com a caixa invisível)
         let drawX = this.x - cameraX - (drawW - this.width) / 2;
-        let drawY = this.y - (drawH - this.height);
+        
+        // --- O SEGREDO DOS PÉS ---
+        // Como não estamos a cortar a imagem, o espaço vazio por baixo dele vai fazê-lo flutuar.
+        // Use este número para o "empurrar" para baixo.
+        // Se ele flutuar, AUMENTE este número. Se ele enterrar os pés no chão, DIMINUA este número.
+        let ajusteDosPes = 18; 
+        
+        let drawY = this.y - (drawH - this.height) + ajusteDosPes;
 
         ctx.save();
         if (this.facing === -1) {
