@@ -6,7 +6,7 @@ class Player {
         this.height = 75; 
         this.vx = 0; 
         this.vy = 0;
-        this.speed = 6.5; // Um pouco mais rápido para os saltos longos
+        this.speed = 6.5; 
         this.jumpForce = -15.5; 
         this.gravity = 0.8;
         this.grounded = false; 
@@ -24,12 +24,14 @@ class Player {
     }
 
     update(keys, deltaTime, jumpJustPressed) {
+        // Movimento Horizontal
         if (keys.left) { this.vx = -this.speed; this.facing = -1; }
         else if (keys.right) { this.vx = this.speed; this.facing = 1; }
         else { this.vx = 0; }
 
         if (this.grounded) { this.jumps = 0; }
 
+        // Pulo e Duplo Pulo
         if (jumpJustPressed) {
             if (this.grounded) {
                 this.vy = this.jumpForce; this.grounded = false; this.jumps = 1;
@@ -42,7 +44,7 @@ class Player {
 
         // --- SISTEMA DE ANIMAÇÃO ---
         if (!this.grounded) {
-            this.frameY = 3; // Pulo
+            this.frameY = 3; // Linha de Pulo
             this.frameTimer += deltaTime;
             if (this.frameTimer > 100) {
                 this.frameX = (this.frameX + 1) % 4;
@@ -50,7 +52,7 @@ class Player {
             }
         } 
         else if (this.vx !== 0) {
-            this.frameY = 2; // Correr
+            this.frameY = 2; // Linha de Correr
             this.frameTimer += deltaTime;
             if (this.frameTimer > 80) { 
                 this.frameX = (this.frameX + 1) % 4; 
@@ -58,12 +60,10 @@ class Player {
             }
         } 
         else {
-            this.frameY = 0; // Parado
-            this.frameTimer += deltaTime;
-            if (this.frameTimer > 250) { 
-                this.frameX = (this.frameX + 1) % 4; 
-                this.frameTimer = 0; 
-            }
+            // O ESQUEMA FREEZE: Personagem parado
+            this.frameY = 0; 
+            this.frameX = 0; // Congela ABSOLUTAMENTE no primeiro frame
+            this.frameTimer = 0; // O tempo pára de contar para não haver animação
         }
     }
 
@@ -71,11 +71,11 @@ class Player {
         if (this.invincible && Math.floor(Date.now() / 100) % 2) return;
         if (!this.image.complete || this.image.naturalWidth === 0) return;
         
-        // CÁLCULO ESTRICTO PARA EVITAR BORDAS FANTASMAS
+        // CORTE MATEMÁTICO PERFEITO E SEGURO
         let cellW = Math.floor(this.image.naturalWidth / 4);
         let cellH = Math.floor(this.image.naturalHeight / 4); 
         
-        // Corta 28% de cada lado! É um corte muito agressivo que foca só no meio do frame.
+        // Corte agressivo de 28% nas laterais para focar só no centro
         let trimX = Math.floor(cellW * 0.28); 
         let trimY = Math.floor(cellH * 0.05); 
         
@@ -87,7 +87,7 @@ class Player {
         let drawW = 95; 
         let drawH = 95;
         let drawX = this.x - cameraX - (drawW - this.width) / 2;
-        let drawY = this.y - (drawH - this.height) + 22; // Ajuste fino para os sapatos no chão
+        let drawY = this.y - (drawH - this.height) + 22; // Ajuste para pisar no chão
 
         ctx.save();
         if (this.facing === -1) {
