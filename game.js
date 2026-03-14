@@ -7,8 +7,8 @@ const healthDisplay = document.getElementById('healthDisplay');
 const timerDisplay = document.getElementById('timerDisplay');
 
 const assets = { bg: new Image(), arm: new Image(), doc: new Image() };
-// CARREGA A NOVA IMAGEM JPG
-assets.bg.src = 'assets/sprites/fundo.jpg'; 
+// CORRIGIDO AQUI PARA .PNG
+assets.bg.src = 'assets/sprites/fundo.png'; 
 assets.arm.src = 'assets/sprites/armario.png';
 assets.doc.src = 'assets/sprites/documento.png';
 
@@ -65,7 +65,6 @@ function nextLevel() {
     }
 }
 
-// VIDAS AGORA SÃO CORAÇÕES!
 function updateHUD() {
     scoreDisplay.innerText = `Documentos: ${score}`;
     timerDisplay.innerText = `Tempo: ${timer}`;
@@ -119,10 +118,8 @@ function gameLoop(timeStamp) {
             }
         });
 
-        // COLISÃO COM INIMIGOS FATAIS
         levelData.enemies.forEach(enemy => {
             if (isColliding(player, enemy)) {
-                // Tem que pular exatamente por cima!
                 if (player.vy > 0 && player.y + player.height - player.vy <= enemy.y + 20) {
                     enemy.y = 9999; player.vy = -14; score += 5; updateHUD();
                 } else if (!player.invincible) {
@@ -141,17 +138,14 @@ function gameLoop(timeStamp) {
         cameraX = Math.max(0, Math.min(player.x - 400, levelData.finishLine.x - 400));
         ctx.clearRect(0, 0, 800, 600);
 
-        // --- CORTANDO A BARRA PRETA DO FUNDO ---
         if (assets.bg.complete && assets.bg.naturalHeight > 0) {
             let sWidth = assets.bg.naturalWidth;
-            // Corta 15% da parte de baixo (a barra preta)
             let sHeight = assets.bg.naturalHeight * 0.85; 
             
             let ratio = 600 / sHeight;
             let bgW = sWidth * ratio;
             
             for(let i = 0; i < levelData.finishLine.x + 800; i += bgW) {
-                // Desenha a imagem cortada
                 ctx.drawImage(assets.bg, 0, 0, sWidth, sHeight, i - cameraX, 0, bgW, 600);
             }
         }
@@ -168,7 +162,7 @@ function gameLoop(timeStamp) {
         });
 
         let f = levelData.finishLine;
-        ctx.fillStyle = `rgba(46, 204, 113, ${0.3 + 0.3 * Math.sin(Date.now() / 200)})`; // Porta brilhante
+        ctx.fillStyle = `rgba(46, 204, 113, ${0.3 + 0.3 * Math.sin(Date.now() / 200)})`; 
         ctx.fillRect(f.x - cameraX, f.y, f.width, f.height);
         ctx.fillStyle = "white"; ctx.font = "bold 20px Courier New";
         ctx.fillText("PROXIMA FASE", f.x - cameraX + 10, f.y - 10);
@@ -177,12 +171,10 @@ function gameLoop(timeStamp) {
         player.draw(ctx, cameraX);
 
     } else {
-        // MENUS E TÍTULO PISCANDO
         ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0,0,800,600);
         ctx.textAlign = "center"; 
         
         if (gameState === 'START') {
-            // TÍTULO PISCANDO
             let titleAlpha = 0.6 + 0.4 * Math.sin(Date.now() / 150); 
             ctx.fillStyle = `rgba(241, 196, 15, ${titleAlpha})`; 
             ctx.font = "bold 55px Courier New";
