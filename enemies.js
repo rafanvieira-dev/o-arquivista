@@ -41,7 +41,7 @@ class Enemy {
     }
 }
 
-// OS NOVOS NPCs AMIGÁVEIS E DO TAMANHO DO PLAYER
+// OS NOVOS NPCs AMIGÁVEIS (1 FRAME ÚNICO)
 class NPC {
     constructor(x, y, type) {
         this.x = x;
@@ -52,42 +52,36 @@ class NPC {
         this.width = 30;
         this.height = 75; 
         
-        // O FREEZE ABSOLUTO: Fixados no frame 1 (o frame 0 costuma estar cortado nas bordas)
-        this.frameX = 1; 
+        // Agora o código sabe que a imagem tem apenas 1 frame!
+        this.cols = 1;
+        this.rows = 1;
         
         if (type === 'flavio') {
-            this.cols = 6; this.rows = 2; this.animRow = 0;
             this.image = assets.flavio;
             this.message = "Excelente trabalho, Arquivista!";
         } else if (type === 'rosale') {
-            this.cols = 4; this.rows = 4; this.animRow = 0; // Assumindo grelha 4x4
             this.image = assets.rosale;
             this.message = "Obrigada por trazer os arquivos!";
         } else if (type === 'eliezer') {
-            this.cols = 4; this.rows = 4; this.animRow = 0; // Assumindo grelha 4x4
             this.image = assets.eliezer;
             this.message = "Os registos estão seguros aqui.";
         }
     }
 
     update(deltaTime) {
-        // Estátua absoluta. Sem respiração, sem mudar de frame.
+        // Estátua absoluta. Como só tem 1 frame, não fazemos update de animação.
     }
 
     draw(ctx, cameraX) {
         if (!this.image || !this.image.complete || this.image.naturalWidth === 0) return;
 
-        let cellW = Math.floor(this.image.naturalWidth / this.cols);
-        let cellH = Math.floor(this.image.naturalHeight / this.rows);
+        // Pega na largura e altura totais da imagem (já que é só 1 frame)
+        let sW = this.image.naturalWidth;
+        let sH = this.image.naturalHeight;
         
-        // CORTE SUAVE: Apenas 10% para não lhes arrancar braços!
-        let trimX = Math.floor(cellW * 0.10); 
-        let trimY = Math.floor(cellH * 0.05); 
-        
-        let sX = Math.floor((this.frameX * cellW) + trimX);
-        let sY = Math.floor((this.animRow * cellH) + trimY);
-        let sW = Math.floor(cellW - (trimX * 2));
-        let sH = Math.floor(cellH - (trimY * 2));
+        // Começa a desenhar desde o ponto 0x0 da imagem original
+        let sX = 0;
+        let sY = 0;
 
         // TAMANHO EXATO DE DESENHO DO PLAYER (95x95)
         let drawW = 95; 
@@ -97,6 +91,7 @@ class NPC {
         // Alinhamento exato para pisarem a madeira ao lado do player
         let drawY = Math.floor(this.y - (drawH - this.height) + 18); 
 
+        // Desenha a imagem inteira no ecrã
         ctx.drawImage(this.image, sX, sY, sW, sH, drawX, drawY, drawW, drawH);
 
         // Balão de fala centrado sobre eles
