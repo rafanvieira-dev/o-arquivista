@@ -64,6 +64,10 @@ class NPC {
         } else if (type === 'eliezer') {
             this.image = assets.eliezer;
             this.message = "Os registos estão seguros aqui.";
+        } else if (type === 'igorgak') {
+            // O NOVO NPC IGOR!
+            this.image = assets.igorgak;
+            this.message = "Ótima catalogação de documentos!";
         }
     }
 
@@ -79,8 +83,7 @@ class NPC {
         let sX = 0;
         let sY = 0;
 
-        // PROPORÇÕES PERFEITAS: Altura cravada em 95px (exatamente igual ao Player). 
-        // A largura adapta-se matematicamente para a imagem não esticar!
+        // PROPORÇÕES PERFEITAS
         let drawH = 95; 
         let drawW = Math.floor(drawH * (sW / sH)); 
         
@@ -94,19 +97,17 @@ class NPC {
             let bubbleW = 280;
             let bubbleH = 30;
             let bubbleX = drawX + (drawW / 2) - (bubbleW / 2);
-            let bubbleY = drawY - bubbleH - 25; // Sobe para não tapar a cabeça
+            let bubbleY = drawY - bubbleH - 25;
 
-            ctx.fillStyle = "rgba(255, 255, 255, 0.95)"; // Branco opaco
-            ctx.strokeStyle = "#000"; // Borda preta
+            ctx.fillStyle = "rgba(255, 255, 255, 0.95)"; 
+            ctx.strokeStyle = "#000"; 
             ctx.lineWidth = 2;
 
-            // Retângulo arredondado do balão
             ctx.beginPath();
             ctx.roundRect(bubbleX, bubbleY, bubbleW, bubbleH, 8); 
             ctx.fill();
             ctx.stroke();
 
-            // O bico do balão apontando para o NPC
             ctx.beginPath();
             ctx.moveTo(drawX + (drawW / 2) - 8, bubbleY + bubbleH);
             ctx.lineTo(drawX + (drawW / 2) + 8, bubbleY + bubbleH);
@@ -115,7 +116,6 @@ class NPC {
             ctx.fill();
             ctx.stroke();
 
-            // Apagar o traço que divide o bico do balão
             ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
             ctx.beginPath();
             ctx.moveTo(drawX + (drawW / 2) - 7, bubbleY + bubbleH - 1);
@@ -124,7 +124,6 @@ class NPC {
             ctx.closePath();
             ctx.fill();
 
-            // Texto dentro do Balão
             ctx.fillStyle = "#000";
             ctx.font = "bold 13px Courier New";
             ctx.textAlign = "center";
