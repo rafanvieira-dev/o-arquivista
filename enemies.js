@@ -40,3 +40,65 @@ class Enemy {
         ctx.restore();
     }
 }
+
+// A NOVA CLASSE PARA OS SEUS PERSONAGENS!
+class NPC {
+    constructor(x, y, type) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.width = 40;
+        this.height = 75;
+        this.frameX = 0;
+        this.frameTimer = 0;
+
+        // Configuração exata para a grelha de cada personagem que enviou
+        if (type === 'flavio') {
+            this.cols = 6; this.rows = 2; this.animRow = 1; this.maxFrames = 6;
+            this.image = assets.flavio;
+            this.message = "Excelente trabalho, Arquivista!";
+        } else if (type === 'rosale') {
+            this.cols = 4; this.rows = 2; this.animRow = 1; this.maxFrames = 4;
+            this.image = assets.rosale;
+            this.message = "Obrigada por trazer os arquivos!";
+        } else if (type === 'eliezer') {
+            this.cols = 4; this.rows = 2; this.animRow = 0; this.maxFrames = 4;
+            this.image = assets.eliezer;
+            this.message = "Os registos estão seguros aqui.";
+        }
+    }
+
+    update(deltaTime) {
+        this.frameTimer += deltaTime;
+        if (this.frameTimer > 180) { // Animação suave e calma
+            this.frameX = (this.frameX + 1) % this.maxFrames;
+            this.frameTimer = 0;
+        }
+    }
+
+    draw(ctx, cameraX) {
+        if (!this.image || !this.image.complete || this.image.naturalWidth === 0) return;
+
+        let cellW = Math.floor(this.image.naturalWidth / this.cols);
+        let cellH = Math.floor(this.image.naturalHeight / this.rows);
+        let sX = this.frameX * cellW;
+        let sY = this.animRow * cellH;
+
+        let drawW = 95; 
+        let drawH = 95;
+        let drawX = Math.floor(this.x - cameraX - (drawW - this.width) / 2);
+        let drawY = Math.floor(this.y - (drawH - this.height) + 18); 
+
+        ctx.drawImage(this.image, sX, sY, cellW, cellH, drawX, drawY, drawW, drawH);
+
+        // Caixa de Diálogo (Balão de Fala) quando estão na ecrã
+        if (drawX > -100 && drawX < 900) {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+            ctx.fillRect(drawX - 80, drawY - 35, 260, 25);
+            ctx.fillStyle = "white";
+            ctx.font = "bold 12px Courier New";
+            ctx.textAlign = "center";
+            ctx.fillText(this.message, drawX + 50, drawY - 18);
+        }
+    }
+}
