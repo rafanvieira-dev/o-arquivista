@@ -1,4 +1,5 @@
-const FLOOR_Y = 560; 
+// O chão desceu para 582 para que os pés batam perfeitamente na borda da tela sem o corte!
+const FLOOR_Y = 582; 
 
 function generateLevel(levelNumber) {
     const bgW = 941; 
@@ -36,13 +37,11 @@ function generateLevel(levelNumber) {
     }
 
     let npcType;
-    // AGORA TEMOS 4 PERSONAGENS!
     let mod = levelNumber % 4; 
-    
     if (mod === 1) npcType = 'flavio';
     else if (mod === 2) npcType = 'rosale';
     else if (mod === 3) npcType = 'eliezer';
-    else npcType = 'igorgak'; // Fases 4, 8...
+    else npcType = 'igorgak'; 
 
     let npc = { type: npcType, x: levelLength + 160, y: FLOOR_Y - 75 };
 
