@@ -10,7 +10,7 @@ const timerDisplay = document.getElementById('timerDisplay');
 const assets = { bg: new Image(), arm: new Image(), doc: new Image() };
 // CARREGA A SUA IMAGEM COM OS 9 FUNDOS! 
 // Lembre-se de a guardar com o nome abaixo na pasta certa.
-assets.bg.src = 'assets/sprites/fundo.jpg'; 
+assets.bg.src = 'assets/sprites/fundo.png'; 
 assets.arm.src = 'assets/sprites/armario.png';
 assets.doc.src = 'assets/sprites/documento.png';
 
