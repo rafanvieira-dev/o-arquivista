@@ -40,9 +40,9 @@ class Enemy {
     }
 }
 
-// Ratos (No Chão = 500 - 50 = 450)
+// Ratos (No Chão de madeira = 540 - 50 = 490)
 const enemiesList = [
-    new Enemy(600, 450, 150),
-    new Enemy(1450, 450, 100),
-    new Enemy(2200, 450, 200)
+    new Enemy(600, 490, 150),
+    new Enemy(1450, 490, 100),
+    new Enemy(2200, 490, 200)
 ];
