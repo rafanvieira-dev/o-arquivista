@@ -1,4 +1,3 @@
-// O chão desceu para 582 para que os pés batam perfeitamente na borda da tela sem o corte!
 const FLOOR_Y = 582; 
 
 function generateLevel(levelNumber) {
@@ -25,9 +24,17 @@ function generateLevel(levelNumber) {
             items.push({ x: arm1X + (arm1W/2) - (docSize/2), y: FLOOR_Y - arm1H - docSize - 5, width: docSize, height: docSize, collected: false });
         }
 
-        let enemyChance = 0.2 + (levelNumber * 0.1); 
+        // MAIS RATOS: A chance inicial é muito maior e sobe a cada nível
+        let enemyChance = 0.4 + (levelNumber * 0.15); 
         if (Math.random() < enemyChance) {
-            enemies.push(new Enemy(chunkStart + 450, FLOOR_Y - 40, 100));
+            // Rato 1
+            enemies.push(new Enemy(chunkStart + 400, FLOOR_Y - 40, 80));
+        }
+
+        // RISCO DUPLO: Nas fases mais avançadas, pode spawnar um 2º rato no mesmo buraco!
+        let secondEnemyChance = (levelNumber * 0.12); 
+        if (Math.random() < secondEnemyChance) {
+            enemies.push(new Enemy(chunkStart + 520, FLOOR_Y - 40, 80));
         }
 
         let arm2X = chunkStart + 650;
