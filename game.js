@@ -9,14 +9,12 @@ const firebaseConfig = {
     measurementId: "G-BL9BENVQJC"
 };
 
-// Inicializa Nuvem
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.firestore();
 let topScores = [];
 
-// Vai buscar o Top 5
 function fetchRecordes() {
     db.collection("recordes").orderBy("pontuacao", "desc").limit(5).get()
     .then((querySnapshot) => {
@@ -25,13 +23,11 @@ function fetchRecordes() {
     })
     .catch(err => console.log("Sem conexão aos recordes ainda..."));
 }
-fetchRecordes(); // Carrega ao abrir a página
+fetchRecordes(); 
 
-// Grava o Progresso
 function salvarProgresso() {
     let playerName = localStorage.getItem("arquivista_nome") || "Anônimo";
     
-    // Verifica se já existe um recorde maior para não o apagar
     db.collection("recordes").doc(playerName).get().then((docSnapshot) => {
         let melhorPontuacao = score;
         let melhorFase = currentLevel;
@@ -61,9 +57,16 @@ const scoreDisplay = document.getElementById('scoreDisplay');
 const healthDisplay = document.getElementById('healthDisplay');
 const timerDisplay = document.getElementById('timerDisplay');
 
-const assets = { bg: new Image(), arm: new Image(), doc: new Image() };
+// CARREGAMENTO DOS NOVOS NPCS
+const assets = { 
+    bg: new Image(), arm: new Image(), doc: new Image(),
+    flavio: new Image(), rosale: new Image(), eliezer: new Image()
+};
 assets.arm.src = 'assets/sprites/armario.png';
 assets.doc.src = 'assets/sprites/documento.png';
+assets.flavio.src = 'assets/sprites/flavio.jpg';
+assets.rosale.src = 'assets/sprites/rosale.jpg';
+assets.eliezer.src = 'assets/sprites/eliezer.png';
 
 let player, cameraX, score, health, timer, timerAccumulator, gameState;
 let currentLevel = 1;
@@ -85,7 +88,6 @@ window.addEventListener('keyup', e => {
     if (e.code === 'Space') keys.up = false;
 });
 
-// Pede Nome no Início
 function iniciarComNome() {
     let playerName = localStorage.getItem("arquivista_nome");
     if (!playerName) {
@@ -107,7 +109,6 @@ function checkMenuProgression() {
     }
 }
 
-// Toque Mobile
 function handleTouch(e) {
     if (gameState !== 'PLAYING') {
         if (e.type === 'touchstart') checkMenuProgression();
@@ -136,6 +137,12 @@ window.addEventListener('touchcancel', handleTouch, { passive: false });
 function initLevel(lvl) {
     levelData = generateLevel(lvl);
     assets.bg.src = levelData.bgImage; 
+
+    // INICIALIZA O NPC DA FASE
+    if (levelData.npc) {
+        levelData.npcInstance = new NPC(levelData.npc.x, levelData.npc.y, levelData.npc.type);
+    }
+    
     player = new Player(100, 300);
     cameraX = 0; timer = levelData.timeLimit; timerAccumulator = 0;
     gameState = 'PLAYING';
@@ -203,14 +210,12 @@ function gameLoop(timeStamp) {
         applyPhysics();
         levelData.enemies.forEach(e => e.update(deltaTime));
         
-        // 10 PONTOS POR DOCUMENTO
         levelData.items.forEach(it => {
             if (!it.collected && isColliding(player, it)) {
                 it.collected = true; score += 10; updateHUD();
             }
         });
 
-        // 15 PONTOS POR MATAR RATO
         levelData.enemies.forEach(enemy => {
             if (isColliding(player, enemy)) {
                 if (player.vy > 0 && player.y + player.height - player.vy <= enemy.y + 20) {
@@ -256,6 +261,12 @@ function gameLoop(timeStamp) {
         ctx.fillStyle = "white"; ctx.font = "bold 20px Courier New";
         ctx.fillText("PROXIMA FASE", f.x - cameraX + 10, f.y - 10);
 
+        // DESENHA O NPC NA FASE
+        if (levelData.npcInstance) {
+            levelData.npcInstance.update(deltaTime);
+            levelData.npcInstance.draw(ctx, cameraX);
+        }
+
         levelData.enemies.forEach(e => e.draw(ctx, cameraX));
         player.draw(ctx, cameraX);
 
@@ -264,7 +275,6 @@ function gameLoop(timeStamp) {
         ctx.textAlign = "center"; 
         
         if (gameState === 'START') {
-            // INSTRUÇÕES
             ctx.fillStyle = "white"; ctx.font = "16px Courier New";
             ctx.fillText("💻 PC: ← → Andar | ESPAÇO Pular", 400, 260);
             ctx.fillText("📱 CELULAR: Toque Esquerda p/ Andar | Direita p/ Pular", 400, 290);
@@ -272,13 +282,12 @@ function gameLoop(timeStamp) {
             ctx.fillStyle = "#2ecc71"; ctx.font = "bold 20px Courier New";
             ctx.fillText("Toque na tela ou ENTER para Começar", 400, 340);
 
-            // RANKING FIREBASE
             ctx.fillStyle = "#f1c40f"; ctx.font = "bold 22px Courier New";
             ctx.fillText("🏆 TOP 5 RECORDES 🏆", 400, 420);
             ctx.fillStyle = "white"; ctx.font = "16px Courier New";
             
             if (topScores.length === 0) {
-                ctx.fillText("Sem recordes... Seja o primeiro!", 400, 450);
+                ctx.fillText("A carregar recordes do Firebase...", 400, 450);
             } else {
                 topScores.forEach((rec, index) => {
                     ctx.fillText(`${index + 1}. ${rec.nome} - ${rec.pontuacao} pts (Nível ${rec.fase_alcancada})`, 400, 455 + (index * 22));
