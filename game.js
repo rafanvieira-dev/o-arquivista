@@ -1,6 +1,6 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const titleElement = document.getElementById('game-title'); // Controla o Título Piscando
+const titleElement = document.getElementById('game-title');
 
 const levelDisplay = document.getElementById('levelDisplay');
 const scoreDisplay = document.getElementById('scoreDisplay');
@@ -8,9 +8,8 @@ const healthDisplay = document.getElementById('healthDisplay');
 const timerDisplay = document.getElementById('timerDisplay');
 
 const assets = { bg: new Image(), arm: new Image(), doc: new Image() };
-// CARREGA A SUA IMAGEM COM OS 9 FUNDOS! 
-// Lembre-se de a guardar com o nome abaixo na pasta certa.
-assets.bg.src = 'assets/sprites/fundo.png'; 
+// Imagem com a grelha de 9 cenários! (Mude para .png se o seu ficheiro for png)
+assets.bg.src = 'assets/sprites/fundo.jpg'; 
 assets.arm.src = 'assets/sprites/armario.png';
 assets.doc.src = 'assets/sprites/documento.png';
 
@@ -22,6 +21,7 @@ let levelData = {};
 let keys = { left: false, right: false, up: false };
 let jumpJustPressed = false; let lastTime = 0;
 
+// CONTROLES TECLADO
 window.addEventListener('keydown', e => {
     if (e.code === 'ArrowLeft') keys.left = true;
     if (e.code === 'ArrowRight') keys.right = true;
@@ -40,24 +40,53 @@ function checkMenuProgression() {
     else if (gameState === 'GAME_COMPLETED') resetGame();
 }
 
-window.addEventListener('touchstart', (e) => {
-    if (gameState !== 'PLAYING') checkMenuProgression();
-});
+// --- CONTROLES MOBILE (Toque Invisível na Tela) ---
+function handleTouch(e) {
+    if (gameState !== 'PLAYING') {
+        if (e.type === 'touchstart') checkMenuProgression();
+        return;
+    }
+    
+    e.preventDefault(); // Evita scroll do ecrã
 
-const btnLeft = document.getElementById('btn-left');
-const btnRight = document.getElementById('btn-right');
-const btnJump = document.getElementById('btn-jump');
+    // Zera os botões para recalcular onde os dedos estão
+    keys.left = false;
+    keys.right = false;
+    let isJumping = false;
 
-function setupTouchBtn(btn, key) {
-    btn.addEventListener('touchstart', (e) => { 
-        e.preventDefault(); 
-        if (gameState === 'PLAYING') { keys[key] = true; if (key === 'up' && !keys.up) jumpJustPressed = true; }
-    });
-    btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; });
+    const screenWidth = window.innerWidth;
+
+    // Analisa cada dedo que está a tocar no ecrã
+    for (let i = 0; i < e.touches.length; i++) {
+        let touchX = e.touches[i].clientX;
+
+        // Zona 1: 0% a 25% da tela (Esquerda)
+        if (touchX < screenWidth * 0.25) {
+            keys.left = true;
+        } 
+        // Zona 2: 25% a 50% da tela (Direita)
+        else if (touchX >= screenWidth * 0.25 && touchX < screenWidth * 0.5) {
+            keys.right = true;
+        } 
+        // Zona 3: 50% a 100% da tela (Pulo)
+        else if (touchX >= screenWidth * 0.5) {
+            isJumping = true;
+        }
+    }
+
+    // Regista o clique de pulo sem repetir infinitamente no ar
+    if (isJumping && !keys.up) {
+        jumpJustPressed = true;
+    }
+    keys.up = isJumping;
 }
-setupTouchBtn(btnLeft, 'left');
-setupTouchBtn(btnRight, 'right');
-setupTouchBtn(btnJump, 'up');
+
+// Ouve os toques em qualquer lugar do ecrã
+window.addEventListener('touchstart', handleTouch, { passive: false });
+window.addEventListener('touchmove', handleTouch, { passive: false });
+window.addEventListener('touchend', handleTouch, { passive: false });
+window.addEventListener('touchcancel', handleTouch, { passive: false });
+
 
 function initLevel(lvl) {
     levelData = generateLevel(lvl);
@@ -110,8 +139,6 @@ function applyPhysics() {
 
 function gameLoop(timeStamp) {
     let deltaTime = timeStamp - lastTime; lastTime = timeStamp;
-
-    // Controla a visibilidade do título a piscar
     titleElement.style.display = (gameState === 'START') ? 'block' : 'none';
 
     if (gameState === 'PLAYING') {
@@ -148,23 +175,21 @@ function gameLoop(timeStamp) {
         cameraX = Math.max(0, Math.min(player.x - 400, levelData.finishLine.x - 400));
         ctx.clearRect(0, 0, 800, 600);
 
-        // --- MÁGICA DOS 9 CENÁRIOS NA MESMA IMAGEM ---
+        // --- SISTEMA CORRIGIDO DE CORTAR OS FUNDOS ---
         if (assets.bg.complete && assets.bg.naturalHeight > 0) {
-            // A sua imagem tem 3 colunas e 3 linhas
-            let bgCols = 3; let bgRows = 3;
-            let cellW = assets.bg.naturalWidth / bgCols;
-            let cellH = assets.bg.naturalHeight / bgRows;
+            // A imagem tem 3x3 cenários
+            let cellW = assets.bg.naturalWidth / 3;
+            let cellH = assets.bg.naturalHeight / 3;
             
-            // Escolhe o cenário baseado no Nível atual (recicla após o nível 9)
+            // Cada nível tem um índice diferente (0 a 8)
             let bgIndex = (currentLevel - 1) % 9;
-            let col = bgIndex % bgCols;
-            let row = Math.floor(bgIndex / bgCols);
+            let col = bgIndex % 3;
+            let row = Math.floor(bgIndex / 3);
             
             let sX = col * cellW;
             let sY = row * cellH;
             
-            // Corta os 15% de baixo para tirar a barra preta daquele cenário específico
-            let cutHeight = cellH * 0.85; 
+            let cutHeight = cellH * 0.85; // Ignora o fundo preto de cada quadradinho
             let ratio = 600 / cutHeight;
             let bgW = cellW * ratio;
             
@@ -196,27 +221,26 @@ function gameLoop(timeStamp) {
         ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0,0,800,600);
         ctx.textAlign = "center"; 
         
-        let startMsg = "Toque ou ENTER para Começar"; 
+        let startMsg = "Toque no Ecrã para Começar"; 
         
         if (gameState === 'START') {
-            // O título "O ARQUIVISTA" já está a ser desenhado no index.html!
-            ctx.fillStyle = "white"; ctx.font = "20px Courier New";
+            ctx.fillStyle = "white"; ctx.font = "22px Courier New";
             ctx.fillText(startMsg, 400, 360);
         } else if (gameState === 'LEVEL_CLEAR') {
             ctx.fillStyle = "#2ecc71"; ctx.font = "bold 40px Courier New";
             ctx.fillText(`NÍVEL ${currentLevel} CONCLUÍDO!`, 400, 250);
-            ctx.fillStyle = "white"; ctx.font = "20px Courier New";
+            ctx.fillStyle = "white"; ctx.font = "22px Courier New";
             ctx.fillText("Toque para o Próximo Nível", 400, 320);
         } else if (gameState === 'GAME_COMPLETED') {
             ctx.fillStyle = "#3498db"; ctx.font = "bold 40px Courier New";
             ctx.fillText("ARQUIVO MESTRE SALVO!", 400, 250);
-            ctx.fillStyle = "white"; ctx.font = "20px Courier New";
-            ctx.fillText(`Você venceu as 10 Fases com ${score} Pontos!`, 400, 320);
+            ctx.fillStyle = "white"; ctx.font = "22px Courier New";
+            ctx.fillText(`Venceu as 10 Fases com ${score} Pontos!`, 400, 320);
             ctx.fillText("Toque para Jogar Novamente", 400, 370);
         } else if (gameState === 'GAMEOVER') {
-            ctx.fillStyle = "#e74c3c"; ctx.font = "bold 45px Courier New";
+            ctx.fillStyle = "#e74c3c"; ctx.font = "bold 50px Courier New";
             ctx.fillText("FIM DE JOGO", 400, 250);
-            ctx.fillStyle = "white"; ctx.font = "20px Courier New";
+            ctx.fillStyle = "white"; ctx.font = "22px Courier New";
             ctx.fillText("Toque para Tentar Novamente", 400, 320);
         }
     }
