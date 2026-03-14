@@ -117,19 +117,14 @@ function gameLoop(timeStamp) {
             }
         });
 
-        // COLISÃO COM INIMIGOS (PERDE VIDA SE NÃO PULAR EM CIMA)
         levelData.enemies.forEach(enemy => {
             if (isColliding(player, enemy)) {
-                // Se o jogador estiver caindo (vy > 0) e bater na parte de cima do rato
                 if (player.vy > 0 && player.y + player.height - player.vy <= enemy.y + 25) {
-                    enemy.y = 9999; // Rato morre
-                    player.vy = -12; // Jogador quica
-                    score += 5; updateHUD();
+                    enemy.y = 9999; player.vy = -12; score += 5; updateHUD();
                 } else if (!player.invincible) {
-                    // Jogador bateu de lado no rato = Perde Vida!
                     health--; updateHUD();
                     player.invincible = true;
-                    setTimeout(() => player.invincible = false, 1500); // 1.5s de invencibilidade para não morrer direto
+                    setTimeout(() => player.invincible = false, 1500); 
                     if (health <= 0) gameState = 'GAMEOVER';
                 }
             }
@@ -142,11 +137,19 @@ function gameLoop(timeStamp) {
         cameraX = Math.max(0, Math.min(player.x - 400, levelData.finishLine.x - 400));
         ctx.clearRect(0, 0, 800, 600);
 
-        if (assets.bg.complete) {
-            let ratio = 600 / assets.bg.naturalHeight;
-            let bgW = assets.bg.naturalWidth * ratio;
+        // --- A MÁGICA DO CORTE DE FUNDO AQUI ---
+        if (assets.bg.complete && assets.bg.naturalHeight > 0) {
+            let sWidth = assets.bg.naturalWidth;
+            // Cortamos 18% da parte de baixo da imagem (A parte preta)
+            let sHeight = assets.bg.naturalHeight * 0.82; 
+            
+            // Faz a parte que sobrou preencher os 600px de altura da tela
+            let ratio = 600 / sHeight;
+            let bgW = sWidth * ratio;
+            
             for(let i = 0; i < levelData.finishLine.x + 800; i += bgW) {
-                ctx.drawImage(assets.bg, i - cameraX, 0, bgW, 600);
+                // Desenha apenas a parte de cima (ignorando a base preta)
+                ctx.drawImage(assets.bg, 0, 0, sWidth, sHeight, i - cameraX, 0, bgW, 600);
             }
         }
 
