@@ -1,7 +1,7 @@
 const FLOOR_Y = 560; 
 
 function generateLevel(levelNumber) {
-    // A largura do fundo na tela (941 pixels) para sabermos onde está a divisa
+    // bgW é aproximadamente a largura do fundo na tela após o corte
     const bgW = 941; 
     const numChunks = 2 + levelNumber; // O tamanho da fase aumenta com os níveis
     const levelLength = numChunks * bgW; 
@@ -28,13 +28,13 @@ function generateLevel(levelNumber) {
             items.push({ x: arm1X + (arm1W/2) - (docSize/2), y: FLOOR_Y - arm1H - docSize - 5, width: docSize, height: docSize, collected: false });
         }
 
-        // Inimigo no chão, entre o armário 1 e o armário 2
+        // Inimigo no chão, no espaço livre entre os armários
         let enemyChance = 0.2 + (levelNumber * 0.1); 
         if (Math.random() < enemyChance) {
             enemies.push(new Enemy(chunkStart + 450, FLOOR_Y - 40, 100));
         }
 
-        // ARMÁRIO 2: Começa SEMPRE aos 650px após o início do frame (Fica do outro lado, mas nunca na divisa)
+        // ARMÁRIO 2: Começa SEMPRE aos 650px após o início do frame (Nunca na divisa)
         let arm2X = chunkStart + 650;
         let arm2W = 120 + Math.random() * (30 + levelNumber * 10);
         let arm2H = 90 + Math.random() * (30 + levelNumber * 15);
