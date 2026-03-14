@@ -1,62 +1,85 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+
+const levelDisplay = document.getElementById('levelDisplay');
+const scoreDisplay = document.getElementById('scoreDisplay');
+const healthDisplay = document.getElementById('healthDisplay');
+const timerDisplay = document.getElementById('timerDisplay');
+
 const assets = { bg: new Image(), arm: new Image(), doc: new Image() };
-assets.bg.src = 'assets/sprites/fundo.png';
+assets.bg.src = 'assets/sprites/fundo.png'; 
 assets.arm.src = 'assets/sprites/armario.png';
 assets.doc.src = 'assets/sprites/documento.png';
 
-// ── HUD ────────────────────────────────────────────────────────────────────
-const scoreDisplay  = document.getElementById('scoreDisplay');
-const timerDisplay  = document.getElementById('timerDisplay');
-const healthDisplay = document.getElementById('healthDisplay');
+let player, cameraX, score, health, timer, timerAccumulator, gameState;
+let currentLevel = 1;
+const MAX_LEVELS = 10;
+let levelData = {}; // Carregado dinamicamente agora!
 
-// ── Estado do jogo ─────────────────────────────────────────────────────────
-let player, cameraX, score, health, timer, timerAccumulator, enemies, gameState;
 let keys = { left: false, right: false, up: false };
-let jumpJustPressed = false;
-let lastTime = 0;
+let jumpJustPressed = false; let lastTime = 0;
 
-// ── Fábrica de inimigos (recria a cada partida) ────────────────────────────
-function createEnemies() {
-    return [
-        new Enemy(600,  FLOOR_Y - 30, 150),
-        new Enemy(1400, FLOOR_Y - 30, 200)
-    ];
-}
+window.addEventListener('keydown', e => {
+    if (e.code === 'ArrowLeft') keys.left = true;
+    if (e.code === 'ArrowRight') keys.right = true;
+    if (e.code === 'Space') { if (!keys.up) jumpJustPressed = true; keys.up = true; }
+    
+    // Controles de Menus
+    if (e.code === 'Enter') {
+        if (gameState === 'START' || gameState === 'GAMEOVER') resetGame();
+        else if (gameState === 'LEVEL_CLEAR') nextLevel();
+        else if (gameState === 'GAME_COMPLETED') resetGame();
+    }
+});
+window.addEventListener('keyup', e => {
+    if (e.code === 'ArrowLeft') keys.left = false;
+    if (e.code === 'ArrowRight') keys.right = false;
+    if (e.code === 'Space') keys.up = false;
+});
 
-// ── Atualiza o HUD ─────────────────────────────────────────────────────────
-function updateHUD() {
-    scoreDisplay.textContent  = `Documentos: ${score}`;
-    timerDisplay.textContent  = `Tempo: ${Math.ceil(timer)}`;
-    timerDisplay.style.color  = timer <= 30 ? '#e74c3c' : '#f1c40f';
-    healthDisplay.textContent = `Vidas: ${'❤️'.repeat(health)}`;
-}
-
-// ── Reinicia o jogo ────────────────────────────────────────────────────────
-function resetGame() {
-    player           = new Player(100, 300);
-    score            = 0;
-    health           = 3;
-    timer            = 190;
+function initLevel(lvl) {
+    levelData = generateLevel(lvl);
+    player = new Player(100, 300);
+    cameraX = 0;
+    timer = levelData.timeLimit;
     timerAccumulator = 0;
-    cameraX          = 0;
-    gameState        = 'PLAYING';
-    enemies          = createEnemies();
-    levelData.items.forEach(i => i.collected = false);
+    gameState = 'PLAYING';
+    
+    levelDisplay.innerText = `Nível: ${currentLevel}`;
     updateHUD();
 }
 
-// ── Detecção de colisão AABB ───────────────────────────────────────────────
-function isColliding(a, b) {
-    return a.x < b.x + b.width  &&
-           a.x + a.width  > b.x &&
-           a.y < b.y + b.height &&
-           a.y + a.height > b.y;
+function resetGame() {
+    currentLevel = 1;
+    score = 0;
+    health = 3;
+    initLevel(currentLevel);
 }
 
-// ── Física ─────────────────────────────────────────────────────────────────
+function nextLevel() {
+    currentLevel++;
+    if (currentLevel > MAX_LEVELS) {
+        gameState = 'GAME_COMPLETED';
+    } else {
+        initLevel(currentLevel);
+    }
+}
+
+function updateHUD() {
+    scoreDisplay.innerText = `Documentos: ${score}`;
+    timerDisplay.innerText = `Tempo: ${timer}`;
+    healthDisplay.innerText = `Vidas: ${health}`;
+}
+
+function isColliding(a, b) {
+    return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
 function applyPhysics() {
     player.x += player.vx;
+    // Impede ir para trás do começo do nível
+    if (player.x < 0) player.x = 0; 
+    
     levelData.platforms.forEach(p => {
         if (isColliding(player, p)) {
             if (player.vx > 0) player.x = p.x - player.width;
@@ -68,178 +91,117 @@ function applyPhysics() {
     player.grounded = false;
     levelData.platforms.forEach(p => {
         if (isColliding(player, p)) {
-            if (player.vy > 0) {
-                player.y = p.y - player.height;
-                player.vy = 0;
-                player.grounded = true;
-            } else if (player.vy < 0) {
-                player.y = p.y + p.height;
-                player.vy = 0;
-            }
+            if (player.vy > 0) { player.y = p.y - player.height; player.vy = 0; player.grounded = true; }
+            else if (player.vy < 0) { player.y = p.y + p.height; player.vy = 0; }
         }
     });
 }
 
-// ── Coleta de documentos ───────────────────────────────────────────────────
-function checkItemCollection() {
-    levelData.items.forEach(item => {
-        if (!item.collected && isColliding(player, item)) {
-            item.collected = true;
-            score++;
-            updateHUD();
-        }
-    });
-}
-
-// ── Colisão com inimigos ───────────────────────────────────────────────────
-function checkEnemyCollision() {
-    if (player.invincible) return;
-    enemies.forEach(enemy => {
-        if (isColliding(player, enemy)) {
-            health--;
-            player.invincible = true;
-            // 2 segundos de invencibilidade após levar dano
-            setTimeout(() => { player.invincible = false; }, 2000);
-            updateHUD();
-            if (health <= 0) gameState = 'GAMEOVER';
-        }
-    });
-}
-
-// ── Controles ──────────────────────────────────────────────────────────────
-window.addEventListener('keydown', e => {
-    if (e.code === 'ArrowLeft')  keys.left = true;
-    if (e.code === 'ArrowRight') keys.right = true;
-    if (e.code === 'Space') { if (!keys.up) jumpJustPressed = true; keys.up = true; }
-    if (e.code === 'Enter' && gameState !== 'PLAYING') resetGame();
-});
-window.addEventListener('keyup', e => {
-    if (e.code === 'ArrowLeft')  keys.left = false;
-    if (e.code === 'ArrowRight') keys.right = false;
-    if (e.code === 'Space') keys.up = false;
-});
-
-// ── Tela de menu ───────────────────────────────────────────────────────────
-function drawMenu() {
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, 800, 600);
-    ctx.textAlign = 'center';
-
-    if (gameState === 'WIN') {
-        ctx.fillStyle = '#2ecc71';
-        ctx.font = "bold 36px 'Courier New'";
-        ctx.fillText('✔ ARQUIVO SALVO COM SUCESSO!', 400, 220);
-        ctx.fillStyle = 'white';
-        ctx.font = "22px 'Courier New'";
-        ctx.fillText(`Documentos coletados: ${score} / ${levelData.items.length}`, 400, 275);
-        ctx.fillStyle = '#aaa';
-        ctx.font = "18px 'Courier New'";
-        ctx.fillText('Pressione ENTER para jogar novamente', 400, 360);
-
-    } else if (gameState === 'GAMEOVER') {
-        ctx.fillStyle = '#e74c3c';
-        ctx.font = "bold 40px 'Courier New'";
-        ctx.fillText(timer <= 0 ? '⏰ TEMPO ESGOTADO!' : '💀 GAME OVER', 400, 220);
-        ctx.fillStyle = 'white';
-        ctx.font = "22px 'Courier New'";
-        ctx.fillText(`Documentos coletados: ${score} / ${levelData.items.length}`, 400, 275);
-        ctx.fillStyle = '#aaa';
-        ctx.font = "18px 'Courier New'";
-        ctx.fillText('Pressione ENTER para tentar novamente', 400, 360);
-
-    } else { // START
-        ctx.fillStyle = '#f1c40f';
-        ctx.font = "bold 44px 'Courier New'";
-        ctx.fillText('O ARQUIVISTA', 400, 180);
-        ctx.fillStyle = 'white';
-        ctx.font = "18px 'Courier New'";
-        ctx.fillText('← →  Mover     ESPAÇO  Pular (duplo!)', 400, 270);
-        ctx.fillText('Colete os documentos e chegue ao arquivo final!', 400, 305);
-        ctx.fillStyle = '#e74c3c';
-        ctx.fillText('Cuidado com os ratos! ❤️❤️❤️', 400, 340);
-        ctx.fillStyle = '#2ecc71';
-        ctx.font = "bold 22px 'Courier New'";
-        ctx.fillText('Pressione ENTER para começar', 400, 420);
-    }
-}
-
-// ── Loop principal ─────────────────────────────────────────────────────────
 function gameLoop(timeStamp) {
-    const deltaTime = timeStamp - lastTime;
-    lastTime = timeStamp;
+    let deltaTime = timeStamp - lastTime; lastTime = timeStamp;
 
     if (gameState === 'PLAYING') {
-
-        // Timer decrescente
         timerAccumulator += deltaTime;
-        if (timerAccumulator >= 1000) {
-            timer--;
-            timerAccumulator -= 1000;
+        if (timerAccumulator >= 1000) { 
+            timer--; 
             updateHUD();
-            if (timer <= 0) { timer = 0; gameState = 'GAMEOVER'; }
+            timerAccumulator = 0; 
+            if (timer <= 0) gameState = 'GAMEOVER';
         }
 
-        // Atualiza entidades
-        player.update(keys, deltaTime, jumpJustPressed);
-        jumpJustPressed = false;
+        player.update(keys, deltaTime, jumpJustPressed); jumpJustPressed = false;
         applyPhysics();
-        enemies.forEach(e => e.update(deltaTime));   // ← INIMIGOS ATIVOS
+        levelData.enemies.forEach(e => e.update(deltaTime));
+        
+        // Coleta Documentos
+        levelData.items.forEach(it => {
+            if (!it.collected && isColliding(player, it)) {
+                it.collected = true; score += 10; updateHUD();
+            }
+        });
 
-        // Verifica colisões
-        checkItemCollection();                        // ← COLETA DOCUMENTOS
-        checkEnemyCollision();                        // ← DANO DOS INIMIGOS
+        // Dano Inimigo
+        levelData.enemies.forEach(enemy => {
+            if (isColliding(player, enemy)) {
+                if (player.vy > 0 && player.y + player.height - player.vy <= enemy.y + 20) {
+                    // Pulo no rato! Mata o rato!
+                    enemy.y = 9999; player.vy = -12; score += 5; updateHUD();
+                } else if (!player.invincible) {
+                    health--; updateHUD();
+                    player.invincible = true;
+                    setTimeout(() => player.invincible = false, 1500);
+                    if (health <= 0) gameState = 'GAMEOVER';
+                }
+            }
+        });
 
-        // Vitória
-        if (isColliding(player, levelData.finishLine)) gameState = 'WIN';
+        // Passar de Fase
+        if (isColliding(player, levelData.finishLine)) {
+            gameState = 'LEVEL_CLEAR';
+        }
 
-        // Câmera
-        cameraX = Math.max(0, Math.min(player.x - 400, 3800));
-
-        // ── Renderização ──────────────────────────────────────────────────
+        cameraX = Math.max(0, Math.min(player.x - 400, levelData.finishLine.x - 400));
         ctx.clearRect(0, 0, 800, 600);
 
-        // Fundo
-        if (assets.bg.complete && assets.bg.naturalHeight > 0) {
-            const ratio = 600 / assets.bg.naturalHeight;
-            const bgW   = assets.bg.naturalWidth * ratio;
-            for (let i = 0; i < 5000; i += bgW)
+        if (assets.bg.complete) {
+            let ratio = 600 / assets.bg.naturalHeight;
+            let bgW = assets.bg.naturalWidth * ratio;
+            for(let i = 0; i < levelData.finishLine.x + 800; i += bgW) {
                 ctx.drawImage(assets.bg, i - cameraX, 0, bgW, 600);
+            }
         }
 
-        // Plataformas (armários)
         levelData.platforms.forEach(p => {
             if (p.type === 'chao_invisivel') return;
             ctx.drawImage(assets.arm, p.x - cameraX, p.y, p.width, p.height + 20);
         });
 
-        // Documentos
+        let animTime = Date.now();
+        let floatY = Math.sin(animTime / 200) * 5; 
         levelData.items.forEach(it => {
-            if (!it.collected)
-                ctx.drawImage(assets.doc, it.x - cameraX, it.y, it.width, it.height);
+            if (!it.collected) ctx.drawImage(assets.doc, it.x - cameraX, it.y + floatY, it.width, it.height);
         });
 
-        // Inimigos
-        enemies.forEach(e => e.draw(ctx, cameraX));   // ← INIMIGOS VISÍVEIS
-
-        // Linha de chegada
-        const f = levelData.finishLine;
-        ctx.fillStyle = 'rgba(46, 204, 113, 0.4)';
+        let f = levelData.finishLine;
+        ctx.fillStyle = "rgba(46, 204, 113, 0.4)";
         ctx.fillRect(f.x - cameraX, f.y, f.width, f.height);
-        ctx.fillStyle = 'white';
-        ctx.font = '20px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('ARQUIVO FINAL', f.x - cameraX, f.y - 10);
+        ctx.fillStyle = "white"; ctx.font = "bold 20px Courier New";
+        ctx.fillText("PROXIMA FASE", f.x - cameraX + 10, f.y - 10);
 
-        // Jogador
+        levelData.enemies.forEach(e => e.draw(ctx, cameraX));
         player.draw(ctx, cameraX);
 
     } else {
-        drawMenu();
+        // MENUS
+        ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0,0,800,600);
+        ctx.fillStyle = "white"; ctx.textAlign = "center"; 
+        
+        if (gameState === 'START') {
+            ctx.fillStyle = "#f1c40f"; ctx.font = "bold 40px Courier New";
+            ctx.fillText("O ARQUIVISTA", 400, 250);
+            ctx.fillStyle = "white"; ctx.font = "20px Courier New";
+            ctx.fillText("Pressione ENTER para Começar", 400, 320);
+        } else if (gameState === 'LEVEL_CLEAR') {
+            ctx.fillStyle = "#2ecc71"; ctx.font = "bold 40px Courier New";
+            ctx.fillText(`NÍVEL ${currentLevel} CONCLUÍDO!`, 400, 250);
+            ctx.fillStyle = "white"; ctx.font = "20px Courier New";
+            ctx.fillText("Pressione ENTER para o Próximo Nível", 400, 320);
+        } else if (gameState === 'GAME_COMPLETED') {
+            ctx.fillStyle = "#3498db"; ctx.font = "bold 40px Courier New";
+            ctx.fillText("ARQUIVO MESTRE SALVO!", 400, 250);
+            ctx.fillStyle = "white"; ctx.font = "20px Courier New";
+            ctx.fillText(`Você venceu as 10 Fases com ${score} Pontos!`, 400, 320);
+            ctx.fillText("Pressione ENTER para Jogar Novamente", 400, 370);
+        } else if (gameState === 'GAMEOVER') {
+            ctx.fillStyle = "#e74c3c"; ctx.font = "bold 40px Courier New";
+            ctx.fillText("FIM DE JOGO", 400, 250);
+            ctx.fillStyle = "white"; ctx.font = "20px Courier New";
+            ctx.fillText("Pressione ENTER para Tentar Novamente", 400, 320);
+        }
     }
-
     requestAnimationFrame(gameLoop);
 }
 
-// ── Inicialização ──────────────────────────────────────────────────────────
+// Inicia a aplicação
 gameState = 'START';
 requestAnimationFrame(gameLoop);
