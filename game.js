@@ -57,35 +57,41 @@ function gameLoop(timeStamp) {
         player.update(keys, deltaTime, jumpJustPressed); jumpJustPressed = false;
         applyPhysics();
         
-        // Verifica Vitória
         if (isColliding(player, levelData.finishLine)) gameState = 'WIN';
 
         cameraX = Math.max(0, Math.min(player.x - 400, 3800));
         ctx.clearRect(0, 0, 800, 600);
 
-        // Fundo: Esticado para ignorar a parte preta de baixo
+        // Fundo: Esticado para a madeira ficar na base do ecrã
         if (assets.bg.complete) {
-            let bgW = (600 / assets.bg.naturalHeight) * assets.bg.naturalWidth;
+            let ratio = 600 / assets.bg.naturalHeight;
+            let bgW = assets.bg.naturalWidth * ratio;
             for(let i = 0; i < 5000; i += bgW) ctx.drawImage(assets.bg, i - cameraX, 0, bgW, 600);
         }
 
-        // Plataformas
+        // Armários: Com base extra para não flutuarem
         levelData.platforms.forEach(p => {
             if (p.type === 'chao_invisivel') return;
-            ctx.drawImage(assets.arm, p.x - cameraX, p.y, p.width, p.height + 10);
+            ctx.drawImage(assets.arm, p.x - cameraX, p.y, p.width, p.height + 20);
         });
 
-        // Saída (Final da Fase)
+        // Itens
+        levelData.items.forEach(it => {
+            if (!it.collected) ctx.drawImage(assets.doc, it.x - cameraX, it.y, it.width, it.height);
+        });
+
+        // Final da Fase (Visual)
         let f = levelData.finishLine;
-        ctx.fillStyle = "rgba(46, 204, 113, 0.5)";
+        ctx.fillStyle = "rgba(46, 204, 113, 0.4)";
         ctx.fillRect(f.x - cameraX, f.y, f.width, f.height);
-        ctx.fillStyle = "white"; ctx.fillText("ARQUIVO FINAL", f.x - cameraX, f.y - 10);
+        ctx.fillStyle = "white"; ctx.font = "20px Arial";
+        ctx.fillText("ARQUIVO FINAL", f.x - cameraX, f.y - 10);
 
         player.draw(ctx, cameraX);
     } else {
         ctx.fillStyle = "black"; ctx.fillRect(0,0,800,600);
-        ctx.fillStyle = "white"; ctx.textAlign = "center";
-        ctx.fillText(gameState === 'WIN' ? "VOCÊ CHEGOU AO FIM!" : "O ARQUIVISTA - ENTER", 400, 300);
+        ctx.fillStyle = "white"; ctx.textAlign = "center"; ctx.font = "30px Arial";
+        ctx.fillText(gameState === 'WIN' ? "ARQUIVO SALVO COM SUCESSO!" : "O ARQUIVISTA - ENTER", 400, 300);
     }
     requestAnimationFrame(gameLoop);
 }
