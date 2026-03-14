@@ -7,7 +7,8 @@ const healthDisplay = document.getElementById('healthDisplay');
 const timerDisplay = document.getElementById('timerDisplay');
 
 const assets = { bg: new Image(), arm: new Image(), doc: new Image() };
-assets.bg.src = 'assets/sprites/fundo.png'; 
+// CARREGA A NOVA IMAGEM JPG
+assets.bg.src = 'assets/sprites/fundo.jpg'; 
 assets.arm.src = 'assets/sprites/armario.png';
 assets.doc.src = 'assets/sprites/documento.png';
 
@@ -64,10 +65,11 @@ function nextLevel() {
     }
 }
 
+// VIDAS AGORA SÃO CORAÇÕES!
 function updateHUD() {
     scoreDisplay.innerText = `Documentos: ${score}`;
     timerDisplay.innerText = `Tempo: ${timer}`;
-    healthDisplay.innerText = `Vidas: ${health}`;
+    healthDisplay.innerText = `Vidas: ${'❤️'.repeat(Math.max(0, health))}`;
 }
 
 function isColliding(a, b) {
@@ -117,10 +119,12 @@ function gameLoop(timeStamp) {
             }
         });
 
+        // COLISÃO COM INIMIGOS FATAIS
         levelData.enemies.forEach(enemy => {
             if (isColliding(player, enemy)) {
-                if (player.vy > 0 && player.y + player.height - player.vy <= enemy.y + 25) {
-                    enemy.y = 9999; player.vy = -12; score += 5; updateHUD();
+                // Tem que pular exatamente por cima!
+                if (player.vy > 0 && player.y + player.height - player.vy <= enemy.y + 20) {
+                    enemy.y = 9999; player.vy = -14; score += 5; updateHUD();
                 } else if (!player.invincible) {
                     health--; updateHUD();
                     player.invincible = true;
@@ -137,25 +141,24 @@ function gameLoop(timeStamp) {
         cameraX = Math.max(0, Math.min(player.x - 400, levelData.finishLine.x - 400));
         ctx.clearRect(0, 0, 800, 600);
 
-        // --- A MÁGICA DO CORTE DE FUNDO AQUI ---
+        // --- CORTANDO A BARRA PRETA DO FUNDO ---
         if (assets.bg.complete && assets.bg.naturalHeight > 0) {
             let sWidth = assets.bg.naturalWidth;
-            // Cortamos 18% da parte de baixo da imagem (A parte preta)
-            let sHeight = assets.bg.naturalHeight * 0.82; 
+            // Corta 15% da parte de baixo (a barra preta)
+            let sHeight = assets.bg.naturalHeight * 0.85; 
             
-            // Faz a parte que sobrou preencher os 600px de altura da tela
             let ratio = 600 / sHeight;
             let bgW = sWidth * ratio;
             
             for(let i = 0; i < levelData.finishLine.x + 800; i += bgW) {
-                // Desenha apenas a parte de cima (ignorando a base preta)
+                // Desenha a imagem cortada
                 ctx.drawImage(assets.bg, 0, 0, sWidth, sHeight, i - cameraX, 0, bgW, 600);
             }
         }
 
         levelData.platforms.forEach(p => {
             if (p.type === 'chao_invisivel') return;
-            ctx.drawImage(assets.arm, p.x - cameraX, p.y, p.width, p.height + 20);
+            ctx.drawImage(assets.arm, p.x - cameraX, p.y, p.width, p.height + 30);
         });
 
         let animTime = Date.now();
@@ -165,7 +168,7 @@ function gameLoop(timeStamp) {
         });
 
         let f = levelData.finishLine;
-        ctx.fillStyle = "rgba(46, 204, 113, 0.4)";
+        ctx.fillStyle = `rgba(46, 204, 113, ${0.3 + 0.3 * Math.sin(Date.now() / 200)})`; // Porta brilhante
         ctx.fillRect(f.x - cameraX, f.y, f.width, f.height);
         ctx.fillStyle = "white"; ctx.font = "bold 20px Courier New";
         ctx.fillText("PROXIMA FASE", f.x - cameraX + 10, f.y - 10);
@@ -174,12 +177,17 @@ function gameLoop(timeStamp) {
         player.draw(ctx, cameraX);
 
     } else {
+        // MENUS E TÍTULO PISCANDO
         ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0,0,800,600);
-        ctx.fillStyle = "white"; ctx.textAlign = "center"; 
+        ctx.textAlign = "center"; 
         
         if (gameState === 'START') {
-            ctx.fillStyle = "#f1c40f"; ctx.font = "bold 40px Courier New";
+            // TÍTULO PISCANDO
+            let titleAlpha = 0.6 + 0.4 * Math.sin(Date.now() / 150); 
+            ctx.fillStyle = `rgba(241, 196, 15, ${titleAlpha})`; 
+            ctx.font = "bold 55px Courier New";
             ctx.fillText("O ARQUIVISTA", 400, 250);
+            
             ctx.fillStyle = "white"; ctx.font = "20px Courier New";
             ctx.fillText("Pressione ENTER para Começar", 400, 320);
         } else if (gameState === 'LEVEL_CLEAR') {
@@ -194,7 +202,7 @@ function gameLoop(timeStamp) {
             ctx.fillText(`Você venceu as 10 Fases com ${score} Pontos!`, 400, 320);
             ctx.fillText("Pressione ENTER para Jogar Novamente", 400, 370);
         } else if (gameState === 'GAMEOVER') {
-            ctx.fillStyle = "#e74c3c"; ctx.font = "bold 40px Courier New";
+            ctx.fillStyle = "#e74c3c"; ctx.font = "bold 45px Courier New";
             ctx.fillText("FIM DE JOGO", 400, 250);
             ctx.fillStyle = "white"; ctx.font = "20px Courier New";
             ctx.fillText("Pressione ENTER para Tentar Novamente", 400, 320);
