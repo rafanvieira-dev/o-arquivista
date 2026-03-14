@@ -1,4 +1,4 @@
-// ====== CONFIGURAÇÃO FIREBASE DO UTILIZADOR ======
+// ====== CONFIGURAÇÃO FIREBASE ======
 const firebaseConfig = {
     apiKey: "AIzaSyBi9zuGjblDXhXpKLAqf9nTj_Ki-fOar2I",
     authDomain: "o-arquivista-69d2b.firebaseapp.com",
@@ -9,32 +9,49 @@ const firebaseConfig = {
     measurementId: "G-BL9BENVQJC"
 };
 
+// Inicializa Nuvem
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.firestore();
+let topScores = [];
 
-// Função para Salvar Progressos na Nuvem
+// Vai buscar o Top 5
+function fetchRecordes() {
+    db.collection("recordes").orderBy("pontuacao", "desc").limit(5).get()
+    .then((querySnapshot) => {
+        topScores = [];
+        querySnapshot.forEach((doc) => topScores.push(doc.data()));
+    })
+    .catch(err => console.log("Sem conexão aos recordes ainda..."));
+}
+fetchRecordes(); // Carrega ao abrir a página
+
+// Grava o Progresso
 function salvarProgresso() {
-    let playerName = localStorage.getItem("arquivista_nome");
-    if (!playerName) {
-        playerName = prompt("Para salvar as suas fases e recordes, introduza o seu nome:");
-        if (playerName) localStorage.setItem("arquivista_nome", playerName);
-    }
+    let playerName = localStorage.getItem("arquivista_nome") || "Anônimo";
     
-    if (playerName) {
+    // Verifica se já existe um recorde maior para não o apagar
+    db.collection("recordes").doc(playerName).get().then((docSnapshot) => {
+        let melhorPontuacao = score;
+        let melhorFase = currentLevel;
+        
+        if (docSnapshot.exists) {
+            let dados = docSnapshot.data();
+            if (dados.pontuacao > score) melhorPontuacao = dados.pontuacao;
+            if (dados.fase_alcancada > currentLevel) melhorFase = dados.fase_alcancada;
+        }
+
         db.collection("recordes").doc(playerName).set({
             nome: playerName,
-            fase_alcancada: currentLevel,
-            documentos_coletados: score,
+            fase_alcancada: melhorFase,
+            pontuacao: melhorPontuacao,
             ultima_partida: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true })
-        .then(() => console.log("Progresso salvo no Firebase!"))
-        .catch(err => console.error("Erro ao salvar:", err));
-    }
+        }, { merge: true }).then(() => fetchRecordes());
+    });
 }
 
-// ====== CÓDIGO DO JOGO ======
+// ====== SISTEMA BASE DO JOGO ======
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const titleElement = document.getElementById('game-title');
@@ -68,23 +85,37 @@ window.addEventListener('keyup', e => {
     if (e.code === 'Space') keys.up = false;
 });
 
-function checkMenuProgression() {
-    if (gameState === 'START' || gameState === 'GAMEOVER') resetGame();
-    else if (gameState === 'LEVEL_CLEAR') nextLevel();
-    else if (gameState === 'GAME_COMPLETED') resetGame();
+// Pede Nome no Início
+function iniciarComNome() {
+    let playerName = localStorage.getItem("arquivista_nome");
+    if (!playerName) {
+        playerName = prompt("Bem-vindo! Qual é o seu nome para o Placar de Recordes?");
+        if (playerName && playerName.trim() !== "") {
+            localStorage.setItem("arquivista_nome", playerName.trim());
+        } else {
+            localStorage.setItem("arquivista_nome", "Anônimo");
+        }
+    }
+    resetGame();
 }
 
+function checkMenuProgression() {
+    if (gameState === 'START' || gameState === 'GAMEOVER' || gameState === 'GAME_COMPLETED') {
+        iniciarComNome();
+    } else if (gameState === 'LEVEL_CLEAR') {
+        nextLevel();
+    }
+}
+
+// Toque Mobile
 function handleTouch(e) {
     if (gameState !== 'PLAYING') {
         if (e.type === 'touchstart') checkMenuProgression();
         return;
     }
-    
     e.preventDefault(); 
-    keys.left = false;
-    keys.right = false;
+    keys.left = false; keys.right = false;
     let isJumping = false;
-
     const screenWidth = window.innerWidth;
 
     for (let i = 0; i < e.touches.length; i++) {
@@ -93,7 +124,6 @@ function handleTouch(e) {
         else if (touchX >= screenWidth * 0.25 && touchX < screenWidth * 0.5) keys.right = true;
         else if (touchX >= screenWidth * 0.5) isJumping = true;
     }
-
     if (isJumping && !keys.up) jumpJustPressed = true;
     keys.up = isJumping;
 }
@@ -106,7 +136,6 @@ window.addEventListener('touchcancel', handleTouch, { passive: false });
 function initLevel(lvl) {
     levelData = generateLevel(lvl);
     assets.bg.src = levelData.bgImage; 
-    
     player = new Player(100, 300);
     cameraX = 0; timer = levelData.timeLimit; timerAccumulator = 0;
     gameState = 'PLAYING';
@@ -125,12 +154,12 @@ function nextLevel() {
         salvarProgresso();
     } else {
         initLevel(currentLevel);
-        salvarProgresso(); // Salva a cada fase que avança
+        salvarProgresso();
     }
 }
 
 function updateHUD() {
-    scoreDisplay.innerText = `Doc: ${score}`;
+    scoreDisplay.innerText = `Pontuação: ${score}`;
     timerDisplay.innerText = `⏳ ${timer}`;
     healthDisplay.innerText = `Vidas: ${'❤️'.repeat(Math.max(0, health))}`;
 }
@@ -167,38 +196,36 @@ function gameLoop(timeStamp) {
         timerAccumulator += deltaTime;
         if (timerAccumulator >= 1000) { 
             timer--; updateHUD(); timerAccumulator = 0; 
-            if (timer <= 0) {
-                gameState = 'GAMEOVER';
-                salvarProgresso();
-            }
+            if (timer <= 0) { gameState = 'GAMEOVER'; salvarProgresso(); }
         }
 
         player.update(keys, deltaTime, jumpJustPressed); jumpJustPressed = false;
         applyPhysics();
         levelData.enemies.forEach(e => e.update(deltaTime));
         
+        // 10 PONTOS POR DOCUMENTO
         levelData.items.forEach(it => {
             if (!it.collected && isColliding(player, it)) {
                 it.collected = true; score += 10; updateHUD();
             }
         });
 
+        // 15 PONTOS POR MATAR RATO
         levelData.enemies.forEach(enemy => {
             if (isColliding(player, enemy)) {
                 if (player.vy > 0 && player.y + player.height - player.vy <= enemy.y + 20) {
-                    enemy.y = 9999; player.vy = -14; score += 5; updateHUD();
+                    enemy.y = 9999; player.vy = -14; score += 15; updateHUD();
                 } else if (!player.invincible) {
                     health--; updateHUD(); player.invincible = true;
                     setTimeout(() => player.invincible = false, 1500); 
-                    if (health <= 0) {
-                        gameState = 'GAMEOVER';
-                        salvarProgresso();
-                    }
+                    if (health <= 0) { gameState = 'GAMEOVER'; salvarProgresso(); }
                 }
             }
         });
 
-        if (isColliding(player, levelData.finishLine)) gameState = 'LEVEL_CLEAR';
+        if (isColliding(player, levelData.finishLine)) {
+            gameState = 'LEVEL_CLEAR'; salvarProgresso();
+        }
 
         cameraX = Math.max(0, Math.min(player.x - 400, levelData.finishLine.x - 400));
         ctx.clearRect(0, 0, 800, 600);
@@ -206,10 +233,8 @@ function gameLoop(timeStamp) {
         if (assets.bg.complete && assets.bg.naturalHeight > 0) {
             let sWidth = assets.bg.naturalWidth;
             let sHeight = assets.bg.naturalHeight * 0.85; 
-            
             let ratio = 600 / sHeight;
             let bgW = sWidth * ratio;
-            
             for(let i = 0; i < levelData.finishLine.x + 800; i += bgW) {
                 ctx.drawImage(assets.bg, 0, 0, sWidth, sHeight, i - cameraX, 0, bgW, 600);
             }
@@ -239,29 +264,43 @@ function gameLoop(timeStamp) {
         ctx.textAlign = "center"; 
         
         if (gameState === 'START') {
-            // INSTRUÇÕES NA TELA INICIAL
-            ctx.fillStyle = "white"; ctx.font = "18px Courier New";
-            ctx.fillText("💻 PC: ← → Andar | ESPAÇO Pular", 400, 310);
-            ctx.fillText("📱 CELULAR: Toque Esquerda p/ Andar | Direita p/ Pular", 400, 350);
+            // INSTRUÇÕES
+            ctx.fillStyle = "white"; ctx.font = "16px Courier New";
+            ctx.fillText("💻 PC: ← → Andar | ESPAÇO Pular", 400, 260);
+            ctx.fillText("📱 CELULAR: Toque Esquerda p/ Andar | Direita p/ Pular", 400, 290);
             
-            ctx.fillStyle = "#2ecc71"; ctx.font = "bold 22px Courier New";
-            ctx.fillText("Toque na tela ou ENTER para Começar", 400, 430);
-        } else if (gameState === 'LEVEL_CLEAR') {
+            ctx.fillStyle = "#2ecc71"; ctx.font = "bold 20px Courier New";
+            ctx.fillText("Toque na tela ou ENTER para Começar", 400, 340);
+
+            // RANKING FIREBASE
+            ctx.fillStyle = "#f1c40f"; ctx.font = "bold 22px Courier New";
+            ctx.fillText("🏆 TOP 5 RECORDES 🏆", 400, 420);
+            ctx.fillStyle = "white"; ctx.font = "16px Courier New";
+            
+            if (topScores.length === 0) {
+                ctx.fillText("Sem recordes... Seja o primeiro!", 400, 450);
+            } else {
+                topScores.forEach((rec, index) => {
+                    ctx.fillText(`${index + 1}. ${rec.nome} - ${rec.pontuacao} pts (Nível ${rec.fase_alcancada})`, 400, 455 + (index * 22));
+                });
+            }
+        } 
+        else if (gameState === 'LEVEL_CLEAR') {
             ctx.fillStyle = "#2ecc71"; ctx.font = "bold 40px Courier New";
             ctx.fillText(`NÍVEL ${currentLevel} CONCLUÍDO!`, 400, 250);
             ctx.fillStyle = "white"; ctx.font = "22px Courier New";
-            ctx.fillText("Progresso salvo! Toque para o Próximo Nível", 400, 320);
+            ctx.fillText("Progresso salvo. Toque para Avançar", 400, 320);
         } else if (gameState === 'GAME_COMPLETED') {
             ctx.fillStyle = "#3498db"; ctx.font = "bold 40px Courier New";
             ctx.fillText("ARQUIVO MESTRE SALVO!", 400, 250);
             ctx.fillStyle = "white"; ctx.font = "22px Courier New";
-            ctx.fillText(`Você venceu com ${score} Pontos (Salvo no Firebase)!`, 400, 320);
+            ctx.fillText(`Venceu com ${score} Pontos (Salvo na Nuvem)!`, 400, 320);
             ctx.fillText("Toque para Jogar Novamente", 400, 370);
         } else if (gameState === 'GAMEOVER') {
             ctx.fillStyle = "#e74c3c"; ctx.font = "bold 50px Courier New";
             ctx.fillText("FIM DE JOGO", 400, 250);
             ctx.fillStyle = "white"; ctx.font = "22px Courier New";
-            ctx.fillText("Score salvo. Toque para Tentar Novamente", 400, 320);
+            ctx.fillText("Pontuação Salva. Toque para Tentar Novamente", 400, 320);
         }
     }
     requestAnimationFrame(gameLoop);
