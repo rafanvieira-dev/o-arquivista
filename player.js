@@ -1,7 +1,7 @@
 class Player {
     constructor(x, y) {
         this.x = x; this.y = y;
-        this.width = 30;  this.height = 70; // Física invisível
+        this.width = 30;  this.height = 70; // Caixa de física invisível
         this.vx = 0; this.vy = 0;
         this.speed = 5; this.jumpForce = -14; this.gravity = 0.8;
         
@@ -19,7 +19,7 @@ class Player {
         this.frameX = 0; 
         this.frameY = 0; 
         this.frameTimer = 0;
-        this.maxFrame = 7; 
+        this.maxFrame = 7; // A imagem tem 8 colunas (0 a 7)
     }
 
     update(keys, deltaTime, jumpJustPressed) {
@@ -44,32 +44,34 @@ class Player {
 
         this.vy += this.gravity;
 
-        // --- LÓGICA DE ANIMAÇÃO CORRIGIDA ---
+        // --- SISTEMA DE ANIMAÇÃO ---
         if (!this.grounded) {
-            // NO AR: Congela no frame de salto (joelho levantado)
+            // NO AR (Linha 3 da sua imagem)
             this.frameY = 2; 
-            this.frameX = 3; 
+            // Se estiver a subir, usa o frame 3 (joelho alto). Se estiver a cair, usa o frame 4.
+            this.frameX = this.vy < 0 ? 3 : 4; 
         } 
         else if (this.vx !== 0) {
-            // A CORRER: Faz o ciclo de animação das pernas
+            // A CORRER (Linha 2 da sua imagem)
             this.frameY = 1; 
             this.maxFrame = 7; 
             
             this.frameTimer += deltaTime;
-            if (this.frameTimer > 60) { // Velocidade da perna (60ms)
-                if (this.frameX >= this.maxFrame) {
-                    this.frameX = 0;
-                } else {
-                    this.frameX++;
-                }
+            if (this.frameTimer > 60) { // Velocidade rápida das pernas
+                this.frameX = (this.frameX >= this.maxFrame) ? 0 : this.frameX + 1;
                 this.frameTimer = 0; 
             }
         } 
         else {
-            // PARADO: Congela TOTALMENTE no primeiro frame
+            // PARADO / RESPIRANDO (Linha 1 da sua imagem)
             this.frameY = 0; 
-            this.frameX = 0; // Fica fixo no primeiro boneco da folha
-            this.frameTimer = 0; // O tempo não passa para a animação
+            this.maxFrame = 7; 
+            
+            this.frameTimer += deltaTime;
+            if (this.frameTimer > 150) { // Respiração lenta e calma
+                this.frameX = (this.frameX >= this.maxFrame) ? 0 : this.frameX + 1;
+                this.frameTimer = 0; 
+            }
         }
     }
 
@@ -77,22 +79,37 @@ class Player {
         if (this.invincible && Math.floor(Date.now() / 100) % 2) return;
         if (!this.image.complete || this.image.naturalWidth === 0) return;
         
-        let sWidth = this.image.naturalWidth / 8;
-        let sHeight = this.image.naturalHeight / 4;
+        // Divide a imagem perfeitamente em 8 colunas e 4 linhas
+        let cellW = this.image.naturalWidth / 8;
+        let cellH = this.image.naturalHeight / 4;
         
-        let drawW = 85; 
-        let drawH = 100;
+        // --- O SEGREDO: CORTE INTELIGENTE (ANTI-BLEED) ---
+        // Cortamos 22% do espaço vazio de cada lado do frame para não apanhar o boneco vizinho!
+        let trimX = cellW * 0.22; 
+        let trimY = cellH * 0.10; // Corta 10% de cima e baixo
         
+        let sX = (this.frameX * cellW) + trimX;
+        let sY = (this.frameY * cellH) + trimY;
+        let sW = cellW - (trimX * 2);
+        let sH = cellH - (trimY * 2);
+        
+        // Tamanho de desenho no ecrã do jogo
+        let drawW = 65; 
+        let drawH = 80;
+        
+        // Alinha os sapatos à caixa de colisão
         let drawX = this.x - cameraX - (drawW - this.width) / 2;
-        let drawY = this.y - (drawH - this.height) - 5; 
+        let drawY = this.y - (drawH - this.height);
 
         ctx.save();
         if (this.facing === -1) {
             ctx.translate(drawX + drawW / 2, drawY);
             ctx.scale(-1, 1);
-            ctx.drawImage(this.image, this.frameX * sWidth, this.frameY * sHeight, sWidth, sHeight, -drawW / 2, 0, drawW, drawH);
+            // Desenha a imagem usando o corte inteligente
+            ctx.drawImage(this.image, sX, sY, sW, sH, -drawW / 2, 0, drawW, drawH);
         } else {
-            ctx.drawImage(this.image, this.frameX * sWidth, this.frameY * sHeight, sWidth, sHeight, drawX, drawY, drawW, drawH);
+            // Desenha a imagem usando o corte inteligente
+            ctx.drawImage(this.image, sX, sY, sW, sH, drawX, drawY, drawW, drawH);
         }
         ctx.restore();
     }
