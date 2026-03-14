@@ -41,39 +41,38 @@ class Enemy {
     }
 }
 
-// NOVA CLASSE: NPCs (Personagens Amigáveis)
+// OS NOVOS NPCs AMIGÁVEIS E GIGANTES
 class NPC {
     constructor(x, y, type) {
         this.x = x;
         this.y = y;
         this.type = type;
         this.width = 40;
-        this.height = 75;
-        this.frameX = 0;
-        this.frameTimer = 0;
+        this.height = 75; // Altura humana
+        
+        // Fixo no primeiro frame do topo para evitar "glitches" da IA
+        this.frameX = 0; 
+        this.animRow = 0; 
 
-        // Configuração individual das grelhas de cada personagem
+        // Assumimos que a IA gerou grelhas de 4x4 para todos
+        this.cols = 4; 
+        this.rows = 4; 
+
         if (type === 'flavio') {
-            this.cols = 6; this.rows = 2; this.animRow = 1; this.maxFrames = 6;
             this.image = assets.flavio;
             this.message = "Excelente trabalho, Arquivista!";
         } else if (type === 'rosale') {
-            this.cols = 4; this.rows = 2; this.animRow = 1; this.maxFrames = 4;
             this.image = assets.rosale;
             this.message = "Obrigada por trazer os arquivos!";
         } else if (type === 'eliezer') {
-            this.cols = 4; this.rows = 2; this.animRow = 0; this.maxFrames = 4;
             this.image = assets.eliezer;
             this.message = "Os registos estão seguros aqui.";
         }
     }
 
     update(deltaTime) {
-        this.frameTimer += deltaTime;
-        if (this.frameTimer > 180) { // Animação lenta e suave
-            this.frameX = (this.frameX + 1) % this.maxFrames;
-            this.frameTimer = 0;
-        }
+        // Como a IA não faz frames sequenciais perfeitos, nós não mudamos de frame!
+        // O efeito de vida será feito na função draw (respiração).
     }
 
     draw(ctx, cameraX) {
@@ -81,24 +80,35 @@ class NPC {
 
         let cellW = Math.floor(this.image.naturalWidth / this.cols);
         let cellH = Math.floor(this.image.naturalHeight / this.rows);
-        let sX = this.frameX * cellW;
-        let sY = this.animRow * cellH;
+        
+        // O SEGREDO DO TAMANHO: Cortar o espaço vazio que a IA deixa nas bordas
+        let trimX = Math.floor(cellW * 0.28); 
+        let trimY = Math.floor(cellH * 0.05); 
+        
+        let sX = Math.floor((this.frameX * cellW) + trimX);
+        let sY = Math.floor((this.animRow * cellH) + trimY);
+        let sW = Math.floor(cellW - (trimX * 2));
+        let sH = Math.floor(cellH - (trimY * 2));
 
-        let drawW = 95; 
-        let drawH = 95;
+        // Tamanho de desenho humano (Maior para se destacar)
+        let drawW = 105; 
+        let drawH = 105;
         let drawX = Math.floor(this.x - cameraX - (drawW - this.width) / 2);
-        let drawY = Math.floor(this.y - (drawH - this.height) + 18); 
+        
+        // Efeito de Respiração (Sobe e desce suavemente para não parecer uma estátua dura)
+        let respiracao = Math.sin(Date.now() / 250) * 2;
+        let drawY = Math.floor(this.y - (drawH - this.height) + 15 + respiracao); 
 
-        ctx.drawImage(this.image, sX, sY, cellW, cellH, drawX, drawY, drawW, drawH);
+        ctx.drawImage(this.image, sX, sY, sW, sH, drawX, drawY, drawW, drawH);
 
-        // Desenha o Balão de Fala quando o jogador se aproxima
+        // Balão de fala
         if (drawX > -100 && drawX < 900) {
             ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-            ctx.fillRect(drawX - 80, drawY - 35, 260, 25);
+            ctx.fillRect(drawX - 70, drawY - 35, 260, 25);
             ctx.fillStyle = "white";
-            ctx.font = "bold 12px Courier New";
+            ctx.font = "bold 13px Courier New";
             ctx.textAlign = "center";
-            ctx.fillText(this.message, drawX + 50, drawY - 18);
+            ctx.fillText(this.message, drawX + 60, drawY - 18);
         }
     }
 }
