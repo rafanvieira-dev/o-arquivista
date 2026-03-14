@@ -14,7 +14,7 @@ assets.doc.src = 'assets/sprites/documento.png';
 let player, cameraX, score, health, timer, timerAccumulator, gameState;
 let currentLevel = 1;
 const MAX_LEVELS = 10;
-let levelData = {}; // Carregado dinamicamente agora!
+let levelData = {}; 
 
 let keys = { left: false, right: false, up: false };
 let jumpJustPressed = false; let lastTime = 0;
@@ -24,7 +24,6 @@ window.addEventListener('keydown', e => {
     if (e.code === 'ArrowRight') keys.right = true;
     if (e.code === 'Space') { if (!keys.up) jumpJustPressed = true; keys.up = true; }
     
-    // Controles de Menus
     if (e.code === 'Enter') {
         if (gameState === 'START' || gameState === 'GAMEOVER') resetGame();
         else if (gameState === 'LEVEL_CLEAR') nextLevel();
@@ -77,7 +76,6 @@ function isColliding(a, b) {
 
 function applyPhysics() {
     player.x += player.vx;
-    // Impede ir para trás do começo do nível
     if (player.x < 0) player.x = 0; 
     
     levelData.platforms.forEach(p => {
@@ -113,29 +111,30 @@ function gameLoop(timeStamp) {
         applyPhysics();
         levelData.enemies.forEach(e => e.update(deltaTime));
         
-        // Coleta Documentos
         levelData.items.forEach(it => {
             if (!it.collected && isColliding(player, it)) {
                 it.collected = true; score += 10; updateHUD();
             }
         });
 
-        // Dano Inimigo
+        // COLISÃO COM INIMIGOS (PERDE VIDA SE NÃO PULAR EM CIMA)
         levelData.enemies.forEach(enemy => {
             if (isColliding(player, enemy)) {
-                if (player.vy > 0 && player.y + player.height - player.vy <= enemy.y + 20) {
-                    // Pulo no rato! Mata o rato!
-                    enemy.y = 9999; player.vy = -12; score += 5; updateHUD();
+                // Se o jogador estiver caindo (vy > 0) e bater na parte de cima do rato
+                if (player.vy > 0 && player.y + player.height - player.vy <= enemy.y + 25) {
+                    enemy.y = 9999; // Rato morre
+                    player.vy = -12; // Jogador quica
+                    score += 5; updateHUD();
                 } else if (!player.invincible) {
+                    // Jogador bateu de lado no rato = Perde Vida!
                     health--; updateHUD();
                     player.invincible = true;
-                    setTimeout(() => player.invincible = false, 1500);
+                    setTimeout(() => player.invincible = false, 1500); // 1.5s de invencibilidade para não morrer direto
                     if (health <= 0) gameState = 'GAMEOVER';
                 }
             }
         });
 
-        // Passar de Fase
         if (isColliding(player, levelData.finishLine)) {
             gameState = 'LEVEL_CLEAR';
         }
@@ -172,7 +171,6 @@ function gameLoop(timeStamp) {
         player.draw(ctx, cameraX);
 
     } else {
-        // MENUS
         ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0,0,800,600);
         ctx.fillStyle = "white"; ctx.textAlign = "center"; 
         
@@ -202,6 +200,5 @@ function gameLoop(timeStamp) {
     requestAnimationFrame(gameLoop);
 }
 
-// Inicia a aplicação
 gameState = 'START';
 requestAnimationFrame(gameLoop);
