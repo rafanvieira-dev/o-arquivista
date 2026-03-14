@@ -10,7 +10,7 @@ class Player {
         this.image = new Image(); 
         this.image.src = 'assets/sprites/arquivista.png'; 
         
-        this.frameX = 1; this.frameY = 0; this.frameTimer = 0;
+        this.frameX = 0; this.frameY = 0; this.frameTimer = 0;
     }
 
     update(keys, deltaTime, jumpJustPressed) {
@@ -27,22 +27,24 @@ class Player {
 
         this.vy += this.gravity;
 
+        // --- MATEMÁTICA CORRIGIDA PARA 4 COLUNAS E 4 LINHAS ---
         if (!this.grounded) {
-            this.frameY = 3; 
-            if (this.vy < 0) this.frameX = 1; 
-            else this.frameX = 2; 
+            this.frameY = 3; // Linha de Pulo/Queda
+            if (this.vy < 0) this.frameX = 1; // Frame de subida
+            else this.frameX = 2; // Frame de descida
         } 
         else if (this.vx !== 0) {
-            this.frameY = 2; 
+            this.frameY = 2; // Linha de Corrida
             this.frameTimer += deltaTime;
             if (this.frameTimer > 70) { 
-                this.frameX = (this.frameX + 1) % 4; 
+                this.frameX = (this.frameX + 1) % 4; // Roda pelos 4 frames!
                 this.frameTimer = 0; 
             }
         } 
         else {
+            // FREEZE ABSOLUTO: Parado sem piscar e sem sumir
             this.frameY = 0; 
-            this.frameX = 1; 
+            this.frameX = 0; // Fixado perfeitamente no frame 0 (o primeiro boneco)
             this.frameTimer = 0; 
         }
     }
@@ -51,10 +53,12 @@ class Player {
         if (this.invincible && Math.floor(Date.now() / 100) % 2) return;
         if (!this.image.complete || this.image.naturalWidth === 0) return;
         
+        // A imagem tem exatamente 4 COLUNAS e 4 LINHAS
         let cellW = Math.floor(this.image.naturalWidth / 4);
         let cellH = Math.floor(this.image.naturalHeight / 4); 
         
-        let trimX = Math.floor(cellW * 0.28); 
+        // Corte de 25% nas laterais para garantir que o braço do boneco ao lado não aparece
+        let trimX = Math.floor(cellW * 0.25); 
         let trimY = Math.floor(cellH * 0.05); 
         
         let sX = Math.floor((this.frameX * cellW) + trimX);
@@ -64,6 +68,8 @@ class Player {
         
         let drawW = 95; let drawH = 95;
         let drawX = Math.floor(this.x - cameraX - (drawW - this.width) / 2);
+        
+        // Ajuste dos sapatos para pisarem exatamente na madeira do fundo
         let drawY = Math.floor(this.y - (drawH - this.height) + 18); 
 
         ctx.save();
