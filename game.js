@@ -69,18 +69,6 @@ function applyPhysics() {
     }
 }
 
-function drawBackground() {
-    if (assets.bg.complete && assets.bg.naturalWidth > 0) {
-        let ratio = 600 / assets.bg.naturalHeight;
-        let bgWidth = assets.bg.naturalWidth * ratio;
-        for(let i = 0; i < 5000; i += bgWidth) { 
-            ctx.drawImage(assets.bg, i - cameraX, 0, bgWidth, 600);
-        }
-    } else {
-        ctx.fillStyle = "#1e272e"; ctx.fillRect(0, 0, 800, 600);
-    }
-}
-
 function gameLoop(timeStamp) {
     if (!lastTime) lastTime = timeStamp; 
     let deltaTime = timeStamp - lastTime;
@@ -102,55 +90,41 @@ function gameLoop(timeStamp) {
 
         cameraX = Math.max(0, Math.min(player.x - 400, 4200));
 
-        drawBackground();
+        if (assets.bg.complete) {
+            let ratio = 600 / assets.bg.naturalHeight;
+            let bgWidth = assets.bg.naturalWidth * ratio;
+            for(let i = 0; i < 5000; i += bgWidth) { 
+                ctx.drawImage(assets.bg, i - cameraX, 0, bgWidth, 600);
+            }
+        }
 
-        // 2. DESENHO DOS ARMÁRIOS (Correção de corte)
         levelData.platforms.forEach(p => {
             if (p.type === 'chao_invisivel') return; 
-            
-            if (assets.arm.complete && assets.arm.naturalWidth > 0) {
-                // A MÁGICA AQUI: p.height + 10 faz com que o armário passe da linha da colisão e enterre no chão, evitando qualquer folga ou falha visual!
-                ctx.drawImage(assets.arm, p.x - cameraX, p.y, p.width, p.height + 10);
-            } else { 
-                ctx.fillStyle = "#34495e"; ctx.fillRect(p.x - cameraX, p.y, p.width, p.height); 
+            if (assets.arm.complete) {
+                // Afunda o armário no chão para não haver folga
+                ctx.drawImage(assets.arm, p.x - cameraX, p.y, p.width, p.height + 20);
             }
         });
 
-        // 3. Desenha Documentos a brilhar
         let animTime = Date.now();
         let floatY = Math.sin(animTime / 200) * 5; 
         levelData.items.forEach(it => {
             if (!it.collected) {
                 ctx.save();
                 ctx.globalAlpha = 0.5 + Math.abs(Math.sin(animTime / 150)) * 0.5; 
-                if (assets.doc.complete && assets.doc.naturalWidth > 0) {
-                    ctx.drawImage(assets.doc, it.x - cameraX, it.y + floatY, it.width, it.height);
-                } else { 
-                    ctx.fillStyle = "yellow"; ctx.fillRect(it.x - cameraX, it.y + floatY, it.width, it.height); 
-                }
+                if (assets.doc.complete) ctx.drawImage(assets.doc, it.x - cameraX, it.y + floatY, it.width, it.height);
                 ctx.restore();
             }
         });
-
-        // 4. Portal
-        let finish = levelData.finishLine;
-        let pulse = Math.abs(Math.sin(Date.now() / 300)) * 0.5 + 0.3;
-        ctx.fillStyle = `rgba(46, 204, 113, ${pulse})`; 
-        ctx.fillRect(finish.x - cameraX, finish.y, finish.width, finish.height);
-        ctx.strokeStyle = "#2ecc71"; ctx.lineWidth = 4; ctx.strokeRect(finish.x - cameraX, finish.y, finish.width, finish.height);
-        ctx.fillStyle = "white"; ctx.font = "bold 20px Courier New"; ctx.textAlign = "center";
-        ctx.fillText("SAÍDA", finish.x - cameraX + finish.width/2, finish.y - 15);
 
         enemiesList.forEach(e => e.draw(ctx, cameraX));
         player.draw(ctx, cameraX);
 
     } else {
-        drawBackground(); 
-        
-        ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0,0,800,600); 
-        ctx.fillStyle = "white"; ctx.font = "bold 40px Courier New"; ctx.textAlign = "center";
+        ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(0,0,800,600);
+        ctx.fillStyle = "white"; ctx.font = "30px Courier New"; ctx.textAlign = "center";
         ctx.fillText(gameState === 'START' ? "O ARQUIVISTA" : (gameState === 'WIN' ? "ARQUIVO SALVO!" : "FIM DE JOGO"), 400, 300);
-        ctx.font = "20px Courier New"; ctx.fillText("Pressione ENTER para começar", 400, 350);
+        ctx.font = "16px Courier New"; ctx.fillText("Pressione ENTER para jogar", 400, 340);
     }
     requestAnimationFrame(gameLoop);
 }
@@ -174,9 +148,6 @@ function checkGameplay() {
             }
         }
     });
-
-    if (isColliding(player, levelData.finishLine)) gameState = 'WIN';
-    if (player.y > 600) { health = 0; gameState = 'GAMEOVER'; }
 }
 
 requestAnimationFrame(gameLoop);
