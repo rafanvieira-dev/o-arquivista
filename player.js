@@ -8,10 +8,9 @@ class Player {
         this.jumps = 0; this.maxJumps = 2;
 
         this.image = new Image(); 
-        // Usa o arquivista de camisa branca que enviou
         this.image.src = 'assets/sprites/arquivista.png'; 
         
-        this.frameX = 0; this.frameY = 0; this.frameTimer = 0;
+        this.frameX = 1; this.frameY = 0; this.frameTimer = 0;
     }
 
     update(keys, deltaTime, jumpJustPressed) {
@@ -42,9 +41,8 @@ class Player {
             }
         } 
         else {
-            // O BLOQUEIO ABSOLUTO: NADA muda quando ele está parado.
             this.frameY = 0; 
-            this.frameX = 0; 
+            this.frameX = 1; 
             this.frameTimer = 0; 
         }
     }
@@ -53,7 +51,6 @@ class Player {
         if (this.invincible && Math.floor(Date.now() / 100) % 2) return;
         if (!this.image.complete || this.image.naturalWidth === 0) return;
         
-        // Uso Math.floor em TUDO para garantir que não haja cortes "quebrados" de pixel
         let cellW = Math.floor(this.image.naturalWidth / 4);
         let cellH = Math.floor(this.image.naturalHeight / 4); 
         
