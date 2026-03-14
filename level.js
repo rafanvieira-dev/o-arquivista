@@ -1,12 +1,12 @@
-// A linha exata onde a madeira do fundo começa no ecrã
-const FLOOR_Y = 540;
+// A linha base. Tudo nasce perfeitamente daqui!
+const FLOOR_Y = 500;
 
 const levelData = {
     platforms: [
-        // Chão INVISÍVEL (Só serve para a física não deixar o boneco cair)
+        // Chão absoluto e impenetrável
         { x: 0, y: FLOOR_Y, width: 5000, height: 100, type: 'chao' }, 
         
-        // Armários grudados na madeira do fundo
+        // Armários grudados no chão (Y = FLOOR_Y - altura)
         { x: 400, y: FLOOR_Y - 100, width: 150, height: 100, type: 'armario' },
         { x: 750, y: FLOOR_Y - 150, width: 200, height: 150, type: 'armario' },
         { x: 1200, y: FLOOR_Y - 200, width: 150, height: 200, type: 'armario' },
@@ -16,6 +16,7 @@ const levelData = {
         { x: 3000, y: FLOOR_Y - 220, width: 300, height: 220, type: 'armario' }
     ],
     items: [
+        // Itens colados ao topo dos armários (Y = Y_do_armário - 40 de altura do item)
         { x: 450, y: FLOOR_Y - 100 - 40, width: 40, height: 40, collected: false }, 
         { x: 800, y: FLOOR_Y - 150 - 40, width: 40, height: 40, collected: false },
         { x: 1250, y: FLOOR_Y - 200 - 40, width: 40, height: 40, collected: false },
