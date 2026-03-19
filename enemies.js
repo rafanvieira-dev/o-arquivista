@@ -8,9 +8,6 @@ class Enemy {
         this.facing = 1;
         this.type = type; 
         this.image = new Image(); 
-        
-        // Offset de tempo aleatório para o voo não ser igual em todas
-        this.timeOffset = Math.random() * Math.PI * 2; 
 
         if (this.type === 'ground') {
             this.image.src = 'assets/sprites/rato.png';
@@ -30,11 +27,11 @@ class Enemy {
             this.numFramesY = 4;
             this.frameY = 0; 
             
-            this.width = 50; 
-            this.height = 50; 
-            this.drawW = 80; 
-            this.drawH = 80; 
-            this.vx = 4; 
+            this.width = 25;  
+            this.height = 25; 
+            this.drawW = 50;  
+            this.drawH = 50; 
+            this.vx = 0; // VELOCIDADE ZERO: Fica totalmente parada
         }
 
         this.frameX = 0; 
@@ -42,26 +39,30 @@ class Enemy {
     }
 
     update(deltaTime) {
-        this.x += this.vx;
-        if (this.x > this.startX + this.patrolDistance || this.x < this.startX) {
-            this.vx *= -1; 
-            this.facing = (this.vx > 0) ? 1 : -1;
+        // Movimento apenas para os ratos de chão
+        if (this.type === 'ground') {
+            this.x += this.vx;
+            if (this.x >= this.startX + this.patrolDistance) {
+                this.x = this.startX + this.patrolDistance;
+                this.vx *= -1; 
+                this.facing = -1;
+            } else if (this.x <= this.startX) {
+                this.x = this.startX;
+                this.vx *= -1; 
+                this.facing = 1;
+            }
         }
         
         this.frameTimer += deltaTime;
         
         if (this.type === 'ground') {
+            // Animação do Rato
             if (this.frameTimer > 60) { 
-                this.frameX++;
-                if (this.frameX >= 4) {
-                    this.frameX = 0;
-                    this.frameY = (this.frameY + 1) % 4;
-                }
+                this.frameX = (this.frameX + 1) % 4;
                 this.frameTimer = 0; 
             }
         } else if (this.type === 'flying') {
-            this.y = this.startY + Math.sin((Date.now() / 200) + this.timeOffset) * 15;
-
+            // Animação da Barata (Apenas bate as asas, sem sair do sítio)
             if (this.frameTimer > 35) { 
                 this.frameX++;
                 if (this.frameX >= 4) {
@@ -76,16 +77,12 @@ class Enemy {
     draw(ctx, cameraX) {
         if (!this.image.complete || this.image.naturalWidth === 0) return;
 
-        // Calcula o tamanho matemático da célula
         let cellWidth = Math.floor(this.image.naturalWidth / this.numFramesX);
         let cellHeight = Math.floor(this.image.naturalHeight / this.numFramesY);
         
-        // --- CORREÇÃO DO VAZAMENTO DE FRAMES ---
-        // Ignora 15% das bordas de cada célula para garantir que não apanha o vizinho
-        let trimX = Math.floor(cellWidth * 0.15); 
-        let trimY = Math.floor(cellHeight * 0.15); 
+        let trimX = 0; 
+        let trimY = 0; 
         
-        // Se a barata precisar de um corte ainda maior por causa das asas, aumentamos aqui
         if (this.type === 'flying') {
             trimX = Math.floor(cellWidth * 0.18); 
             trimY = Math.floor(cellHeight * 0.18);
