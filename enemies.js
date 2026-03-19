@@ -27,11 +27,12 @@ class Enemy {
             this.numFramesY = 4;
             this.frameY = 0; 
             
-            this.width = 25;  
-            this.height = 25; 
-            this.drawW = 50;  
-            this.drawH = 50; 
-            this.vx = 0; // VELOCIDADE ZERO: Fica totalmente parada
+            // --- BARATA MAIS PEQUENA AINDA ---
+            this.width = 12;  // Hitbox mini
+            this.height = 12; 
+            this.drawW = 28;  // Desenho mini
+            this.drawH = 28; 
+            this.vx = 0; // Totalmente parada no ar
         }
 
         this.frameX = 0; 
@@ -39,7 +40,6 @@ class Enemy {
     }
 
     update(deltaTime) {
-        // Movimento apenas para os ratos de chão
         if (this.type === 'ground') {
             this.x += this.vx;
             if (this.x >= this.startX + this.patrolDistance) {
@@ -56,13 +56,11 @@ class Enemy {
         this.frameTimer += deltaTime;
         
         if (this.type === 'ground') {
-            // Animação do Rato
             if (this.frameTimer > 60) { 
                 this.frameX = (this.frameX + 1) % 4;
                 this.frameTimer = 0; 
             }
         } else if (this.type === 'flying') {
-            // Animação da Barata (Apenas bate as asas, sem sair do sítio)
             if (this.frameTimer > 35) { 
                 this.frameX++;
                 if (this.frameX >= 4) {
@@ -83,9 +81,12 @@ class Enemy {
         let trimX = 0; 
         let trimY = 0; 
         
+        // --- CORREÇÃO DO CORTE DAS ASAS ---
         if (this.type === 'flying') {
-            trimX = Math.floor(cellWidth * 0.18); 
-            trimY = Math.floor(cellHeight * 0.18);
+            // Reduzido de 18% para apenas 3%.
+            // Isto não corta as asas mas impede o "bleeding" de frames vizinhos.
+            trimX = Math.floor(cellWidth * 0.03); 
+            trimY = Math.floor(cellHeight * 0.03);
         }
         
         let sX = Math.floor((this.frameX * cellWidth) + trimX);
