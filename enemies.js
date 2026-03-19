@@ -6,7 +6,7 @@ class Enemy {
         this.y = y; 
         this.patrolDistance = patrolDistance;
         this.facing = 1;
-        this.type = type; // 'ground' ou 'flying'
+        this.type = type; 
         this.image = new Image(); 
         
         // Offset de tempo aleatório para o voo não ser igual em todas
@@ -15,12 +15,9 @@ class Enemy {
         if (this.type === 'ground') {
             this.image.src = 'assets/sprites/rato.png';
             this.numFramesX = 4; 
-            
-            // O GRANDE MISTÉRIO RESOLVIDO: O rato também é uma grelha 4x4 e não 4x1!
             this.numFramesY = 4; 
             this.frameY = 0; 
             
-            // Tamanho natural
             this.width = 60; 
             this.height = 35; 
             this.drawW = 85;  
@@ -54,7 +51,6 @@ class Enemy {
         this.frameTimer += deltaTime;
         
         if (this.type === 'ground') {
-            // Animação do Rato (ciclo pelos 16 frames da grelha 4x4)
             if (this.frameTimer > 60) { 
                 this.frameX++;
                 if (this.frameX >= 4) {
@@ -64,10 +60,8 @@ class Enemy {
                 this.frameTimer = 0; 
             }
         } else if (this.type === 'flying') {
-            // Flutuação suave para a barata
             this.y = this.startY + Math.sin((Date.now() / 200) + this.timeOffset) * 15;
 
-            // Animação rápida de voo (ciclo de 16 frames)
             if (this.frameTimer > 35) { 
                 this.frameX++;
                 if (this.frameX >= 4) {
@@ -82,9 +76,25 @@ class Enemy {
     draw(ctx, cameraX) {
         if (!this.image.complete || this.image.naturalWidth === 0) return;
 
-        // Agora o corte usa 4x4 para ambos, rato e barata
-        let cellWidth = this.image.naturalWidth / this.numFramesX;
-        let cellHeight = this.image.naturalHeight / this.numFramesY;
+        // Calcula o tamanho matemático da célula
+        let cellWidth = Math.floor(this.image.naturalWidth / this.numFramesX);
+        let cellHeight = Math.floor(this.image.naturalHeight / this.numFramesY);
+        
+        // --- CORREÇÃO DO VAZAMENTO DE FRAMES ---
+        // Ignora 15% das bordas de cada célula para garantir que não apanha o vizinho
+        let trimX = Math.floor(cellWidth * 0.15); 
+        let trimY = Math.floor(cellHeight * 0.15); 
+        
+        // Se a barata precisar de um corte ainda maior por causa das asas, aumentamos aqui
+        if (this.type === 'flying') {
+            trimX = Math.floor(cellWidth * 0.18); 
+            trimY = Math.floor(cellHeight * 0.18);
+        }
+        
+        let sX = Math.floor((this.frameX * cellWidth) + trimX);
+        let sY = Math.floor((this.frameY * cellHeight) + trimY);
+        let sW = Math.floor(cellWidth - (trimX * 2));
+        let sH = Math.floor(cellHeight - (trimY * 2));
         
         let drawX = this.x - cameraX - (this.drawW - this.width) / 2;
         let drawY = this.y - (this.drawH - this.height);
@@ -93,9 +103,9 @@ class Enemy {
         if (this.facing === -1) {
             ctx.translate(drawX + this.drawW / 2, drawY); 
             ctx.scale(-1, 1);
-            ctx.drawImage(this.image, this.frameX * cellWidth, this.frameY * cellHeight, cellWidth, cellHeight, -this.drawW/2, 0, this.drawW, this.drawH);
+            ctx.drawImage(this.image, sX, sY, sW, sH, -this.drawW/2, 0, this.drawW, this.drawH);
         } else {
-            ctx.drawImage(this.image, this.frameX * cellWidth, this.frameY * cellHeight, cellWidth, cellHeight, drawX, drawY, this.drawW, this.drawH);
+            ctx.drawImage(this.image, sX, sY, sW, sH, drawX, drawY, this.drawW, this.drawH);
         }
         ctx.restore();
     }
