@@ -32,36 +32,29 @@ function generateLevel(levelNumber) {
         let arm2H = 90 + Math.random() * (30 + levelNumber * 15);
         platforms.push({ x: arm2X, y: FLOOR_Y - arm2H, width: arm2W, height: arm2H, type: 'armario' });
 
-        // =========================================================
-        // CORREÇÃO: ESPALHAMENTO PERFEITO DE RATOS (Sem Sobreposição)
-        // =========================================================
+        // --- SISTEMA DE RATOS ESPALHADOS ---
         let fimDoArmario1 = arm1X + arm1W;
-        let espacoLivreChao = arm2X - fimDoArmario1; // Espaço exato entre os dois armários
+        let espacoLivreChao = arm2X - fimDoArmario1; 
         
         let qtdInimigos = 1 + Math.floor(levelNumber / 3); 
-        if (qtdInimigos > 3) qtdInimigos = 3; // MÁXIMO de 3 ratos por buraco para não empilhar
+        if (qtdInimigos > 3) qtdInimigos = 3; // Bloqueia num máximo de 3 ratos para evitar caos visual
 
         let espacoPorRato = espacoLivreChao / qtdInimigos;
 
         for (let j = 0; j < qtdInimigos; j++) {
-            // Posiciona o rato exatamente no meio do seu pedaço de espaço
             let enemyX = fimDoArmario1 + (espacoPorRato * j) + 20; 
-            // A distância de patrulha é limitada ao espaço dele, impedindo choques
             let patrolDist = espacoPorRato - 40; 
             if (patrolDist < 20) patrolDist = 20;
 
             enemies.push(new Enemy(enemyX, FLOOR_Y - 40, patrolDist, 'ground')); 
         }
 
-        // =========================================================
-        // CORREÇÃO: BARATA VOADORA COM MOVIMENTO LONGO
-        // =========================================================
+        // --- SISTEMA DE BARATAS VOADORAS (A partir do nível 3) ---
         if (levelNumber >= 3) {
             let areaSeguraX = arm2X + arm2W + 20; 
-            // Altura variada para ser imprevisível
             let barataY = FLOOR_Y - 150 - Math.random() * 60; 
             
-            // Distância de patrulha enorme (250px) para ela atravessar a tela!
+            // Distância grande de patrulha para ela varrer a tela
             flyingEnemies.push(new Enemy(areaSeguraX, barataY, 250, 'flying'));
         }
     }
