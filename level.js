@@ -32,12 +32,12 @@ function generateLevel(levelNumber) {
         let arm2H = 90 + Math.random() * (30 + levelNumber * 15);
         platforms.push({ x: arm2X, y: FLOOR_Y - arm2H, width: arm2W, height: arm2H, type: 'armario' });
 
-        // --- SISTEMA DE RATOS ESPALHADOS ---
+        // --- SISTEMA DE RATOS NO CHÃO ---
         let fimDoArmario1 = arm1X + arm1W;
         let espacoLivreChao = arm2X - fimDoArmario1; 
         
         let qtdInimigos = 1 + Math.floor(levelNumber / 3); 
-        if (qtdInimigos > 3) qtdInimigos = 3; // Bloqueia num máximo de 3 ratos para evitar caos visual
+        if (qtdInimigos > 3) qtdInimigos = 3; 
 
         let espacoPorRato = espacoLivreChao / qtdInimigos;
 
@@ -49,13 +49,14 @@ function generateLevel(levelNumber) {
             enemies.push(new Enemy(enemyX, FLOOR_Y - 40, patrolDist, 'ground')); 
         }
 
-        // --- SISTEMA DE BARATAS VOADORAS (A partir do nível 3) ---
+        // --- SISTEMA DE BARATAS VOADORAS FIXAS (A partir do nível 3) ---
         if (levelNumber >= 3) {
-            let areaSeguraX = arm2X + arm2W + 20; 
-            let barataY = FLOOR_Y - 150 - Math.random() * 60; 
+            // Posiciona a barata a pairar a meio caminho entre a altura do pulo do jogador
+            let areaSeguraX = arm2X + arm2W + 60; 
+            let barataY = FLOOR_Y - 110; 
             
-            // Distância grande de patrulha para ela varrer a tela
-            flyingEnemies.push(new Enemy(areaSeguraX, barataY, 250, 'flying'));
+            // Distância de patrulha a 0 porque ela já não sai do lugar
+            flyingEnemies.push(new Enemy(areaSeguraX, barataY, 0, 'flying'));
         }
     }
 
