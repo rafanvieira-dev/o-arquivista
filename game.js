@@ -14,6 +14,10 @@ if (!firebase.apps.length) {
 const db = firebase.firestore();
 let topScores = [];
 
+// --- MÚSICA DE FUNDO DA FASE ---
+const bgMusic = new Audio('assets/sounds/fase.mp3');
+bgMusic.loop = true; // Faz a música repetir enquanto estiver jogando
+
 function fetchRecordes() {
     db.collection("recordes").orderBy("pontuacao", "desc").limit(5).get()
     .then((querySnapshot) => {
@@ -82,6 +86,7 @@ window.addEventListener('keydown', e => {
     if (e.code === 'Enter') {
         if (gameState === 'PLAYING' && player.canExit) {
             gameState = 'LEVEL_CLEAR';
+            bgMusic.pause(); // Pausa a música ao passar de nível
             salvarProgresso();
         } else {
             checkMenuProgression();
@@ -123,6 +128,7 @@ function handleTouch(e) {
     
     if (gameState === 'PLAYING' && player.canExit && e.type === 'touchstart') {
         gameState = 'LEVEL_CLEAR';
+        bgMusic.pause(); // Pausa a música ao passar de nível
         salvarProgresso();
         return;
     }
@@ -159,6 +165,11 @@ function initLevel(lvl) {
     player.canExit = false;
     cameraX = 0; timer = levelData.timeLimit; timerAccumulator = 0;
     gameState = 'PLAYING';
+    
+    // Inicia a música de fundo da fase
+    bgMusic.currentTime = 0;
+    bgMusic.play().catch(err => console.log("Áudio aguardando interação:", err));
+
     levelDisplay.innerText = `Nível: ${currentLevel}`;
     updateHUD();
 }
@@ -171,6 +182,7 @@ function nextLevel() {
     currentLevel++;
     if (currentLevel > MAX_LEVELS) {
         gameState = 'GAME_COMPLETED';
+        bgMusic.pause(); // Pausa se zerar o jogo
         salvarProgresso();
     } else {
         initLevel(currentLevel);
@@ -216,7 +228,11 @@ function gameLoop(timeStamp) {
         timerAccumulator += deltaTime;
         if (timerAccumulator >= 1000) { 
             timer--; updateHUD(); timerAccumulator = 0; 
-            if (timer <= 0) { gameState = 'GAMEOVER'; salvarProgresso(); }
+            if (timer <= 0) { 
+                gameState = 'GAMEOVER'; 
+                bgMusic.pause(); // Pausa a música no Game Over
+                salvarProgresso(); 
+            }
         }
 
         player.update(keys, deltaTime, jumpJustPressed); jumpJustPressed = false;
@@ -229,14 +245,18 @@ function gameLoop(timeStamp) {
             }
         });
 
-        // MECÂNICA DE RATOS INVENCÍVEIS (Se tocar, perde vida obrigatoriamente)
+        // MECÂNICA DE RATOS INVENCÍVEIS
         levelData.enemies.forEach(enemy => {
             if (isColliding(player, enemy)) {
                 if (!player.invincible) {
                     health--; updateHUD(); 
                     player.invincible = true;
                     setTimeout(() => player.invincible = false, 1500); 
-                    if (health <= 0) { gameState = 'GAMEOVER'; salvarProgresso(); }
+                    if (health <= 0) { 
+                        gameState = 'GAMEOVER'; 
+                        bgMusic.pause(); // Pausa a música no Game Over
+                        salvarProgresso(); 
+                    }
                 }
             }
         });
@@ -280,7 +300,6 @@ function gameLoop(timeStamp) {
             let txt1 = "APERTE [ENTER]";
             let txt2 = "OU TOQUE P/ PASSAR";
             
-            // AVISO SUBIDO! Agora flutua por cima do portal e do NPC
             ctx.strokeText(txt1, f.x - cameraX + f.width/2, f.y - 40);
             ctx.fillText(txt1, f.x - cameraX + f.width/2, f.y - 40);
             
