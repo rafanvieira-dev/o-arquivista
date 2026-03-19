@@ -18,7 +18,6 @@ class Player {
         this.image = new Image(); 
         this.image.src = 'assets/sprites/arquivista.png'; 
         
-        // MUDANÇA: Começa logo no frame 1 para não nascer invisível
         this.frameX = 1; 
         this.frameY = 0; 
         this.frameTimer = 0;
@@ -41,23 +40,20 @@ class Player {
 
         this.vy += this.gravity;
 
-        // --- LÓGICA DA GRELHA 4x4 ---
         if (!this.grounded) {
-            this.frameY = 3; // Linha 4 (Pulo/Queda)
-            if (this.vy < 0) this.frameX = 1; // Subindo
-            else this.frameX = 2; // Caindo
+            this.frameY = 3; 
+            if (this.vy < 0) this.frameX = 1; 
+            else this.frameX = 2; 
         } 
         else if (this.vx !== 0) {
-            this.frameY = 2; // Linha 3 (Corrida)
+            this.frameY = 2; 
             this.frameTimer += deltaTime;
             if (this.frameTimer > 70) { 
-                this.frameX = (this.frameX + 1) % 4; // Anima de 0 a 3
+                this.frameX = (this.frameX + 1) % 4; 
                 this.frameTimer = 0; 
             }
         } 
         else {
-            // O FREEZE ABSOLUTO NO FRAME 1
-            // Usamos o frame 1 (o segundo desenho) porque o 0 é engolido pelo corte das bordas
             this.frameY = 0; 
             this.frameX = 1; 
             this.frameTimer = 0; 
@@ -71,7 +67,6 @@ class Player {
         let cellW = Math.floor(this.image.naturalWidth / 4);
         let cellH = Math.floor(this.image.naturalHeight / 4); 
         
-        // Corte de 25% nas laterais (Resolve o problema do braço extra)
         let trimX = Math.floor(cellW * 0.25); 
         let trimY = Math.floor(cellH * 0.05); 
         
