@@ -5,7 +5,7 @@ function generateLevel(levelNumber) {
     const numChunks = 2 + levelNumber; 
     const levelLength = numChunks * bgW; 
     
-    let backgroundToUse = `assets/sprites/fundo${((levelNumber - 1) % 10) + 1}.svg`;
+    let backgroundToUse = `assets/sprites/fundo-v2-${String(((levelNumber - 1) % 10) + 1).padStart(2, '0')}.svg`;
     
     let platforms = [{ x: 0, y: FLOOR_Y, width: levelLength + 800, height: 40, type: 'chao_invisivel' }];
     let items = [];
@@ -17,8 +17,8 @@ function generateLevel(levelNumber) {
 
         // --- ARMÁRIO 1 ---
         let arm1X = chunkStart + 250;
-        let arm1W = 120 + Math.random() * (20 + levelNumber * 10);
-        let arm1H = 80 + Math.random() * (30 + levelNumber * 15); 
+        let arm1W = 112 + Math.random() * (18 + levelNumber * 4);
+        let arm1H = 76 + Math.random() * (22 + levelNumber * 7); 
         platforms.push({ x: arm1X, y: FLOOR_Y - arm1H, width: arm1W, height: arm1H, type: 'armario' });
 
         let docSize = 70;
@@ -28,8 +28,8 @@ function generateLevel(levelNumber) {
 
         // --- ARMÁRIO 2 ---
         let arm2X = chunkStart + 650;
-        let arm2W = 120 + Math.random() * (30 + levelNumber * 10);
-        let arm2H = 90 + Math.random() * (30 + levelNumber * 15);
+        let arm2W = 118 + Math.random() * (20 + levelNumber * 4);
+        let arm2H = 82 + Math.random() * (24 + levelNumber * 7);
         platforms.push({ x: arm2X, y: FLOOR_Y - arm2H, width: arm2W, height: arm2H, type: 'armario' });
 
         // --- SISTEMA DE RATOS NO CHÃO ---
