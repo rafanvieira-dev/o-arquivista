@@ -10,25 +10,25 @@ class Enemy {
         this.image = new Image();
 
         if (this.type === 'ground') {
-            this.image.src = 'assets/sprites/rato.png';
+            this.image.src = 'assets/sprites/rato-v2.svg';
             this.numFramesX = 4;
             this.numFramesY = 4;
             this.frameY = 0;
-            this.width = 60;
-            this.height = 35;
-            this.drawW = 85;
-            this.drawH = 55;
+            this.width = 42;
+            this.height = 28;
+            this.drawW = 58;
+            this.drawH = 44;
             this.vx = 2.5;
         } else {
-            this.image.src = 'assets/sprites/barata_voadora.png';
+            this.image.src = 'assets/sprites/barata-v2.svg';
             this.numFramesX = 4;
             this.numFramesY = 4;
             this.frameY = 0;
             // A área de colisão fica mais próxima da área visual da barata.
-            this.width = 22;
-            this.height = 20;
-            this.drawW = 34;
-            this.drawH = 32;
+            this.width = 26;
+            this.height = 24;
+            this.drawW = 42;
+            this.drawH = 42;
             this.vx = 0;
         }
 
