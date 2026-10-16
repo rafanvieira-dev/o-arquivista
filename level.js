@@ -1,7 +1,7 @@
 const FLOOR_Y = 582; 
 
 function generateLevel(levelNumber) {
-    const bgW = 941; 
+    const bgW = 800; 
     const numChunks = 2 + levelNumber; 
     const levelLength = numChunks * bgW; 
     
