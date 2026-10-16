@@ -63,6 +63,7 @@ const assets = {
     bg: new Image(), arm: new Image(), doc: new Image(),
     flavio: new Image(), rosale: new Image(), eliezer: new Image(), igorgak: new Image()
 };
+assets.bg.src = 'assets/sprites/fundo1.svg';
 assets.arm.src = 'assets/sprites/armario-modern.svg';
 assets.doc.src = 'assets/sprites/documento-modern.svg';
 assets.flavio.src = 'assets/sprites/flavio.png';
@@ -337,7 +338,13 @@ function gameLoop(timeStamp) {
         player.draw(ctx, cameraX);
 
     } else {
-        ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0,0,800,600);
+        if (assets.bg.complete && assets.bg.naturalWidth > 0) {
+            ctx.drawImage(assets.bg, 0, 0, 800, 600);
+        } else {
+            ctx.fillStyle = '#0b1727';
+            ctx.fillRect(0, 0, 800, 600);
+        }
+        ctx.fillStyle = "rgba(3,10,20,0.78)"; ctx.fillRect(0,0,800,600);
         ctx.textAlign = "center"; 
         
         if (gameState === 'START') {
