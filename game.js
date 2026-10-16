@@ -66,10 +66,10 @@ const assets = {
 assets.bg.src = 'assets/sprites/fundo1.svg';
 assets.arm.src = 'assets/sprites/armario-modern.svg';
 assets.doc.src = 'assets/sprites/documento-modern.svg';
-assets.flavio.src = 'assets/sprites/flavio-pixel.svg';
-assets.rosale.src = 'assets/sprites/rosale-pixel.svg';
-assets.eliezer.src = 'assets/sprites/eliezer-pixel.svg';
-assets.igorgak.src = 'assets/sprites/igorgak-pixel.svg';
+assets.flavio.src = 'assets/sprites/flavio.png';
+assets.rosale.src = 'assets/sprites/rosale.png';
+assets.eliezer.src = 'assets/sprites/eliezer.png';
+assets.igorgak.src = 'assets/sprites/igorgak.png';
 
 let player, cameraX, score, health, timer, timerAccumulator, gameState;
 let currentLevel = 1;
