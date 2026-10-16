@@ -5,7 +5,8 @@ function generateLevel(levelNumber) {
     const numChunks = 2 + levelNumber; 
     const levelLength = numChunks * bgW; 
     
-    // Seis ambientes temáticos alinhados ao guia visual aprovado; níveis posteriores reutilizam a paleta por ciclo.\n    let backgroundToUse = `assets/sprites/fundo-aprovado-${((levelNumber - 1) % 6) + 1}.svg`;
+    // Seis ambientes temáticos alinhados ao guia visual aprovado; níveis posteriores reutilizam a paleta por ciclo.
+    let backgroundToUse = `assets/sprites/fundo-aprovado-${((levelNumber - 1) % 6) + 1}.svg`;
     
     let platforms = [{ x: 0, y: FLOOR_Y, width: levelLength + 800, height: 40, type: 'chao_invisivel' }];
     let items = [];
