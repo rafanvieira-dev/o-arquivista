@@ -281,7 +281,7 @@ function gameLoop(timeStamp) {
                 if (!player.invincible) {
                     health--; updateHUD(); 
                     player.invincible = true;
-                    setTimeout(() => player.invincible = false, 1500); 
+                    invincibleUntil = timeStamp + 1500; 
                     if (health <= 0) { 
                         gameState = 'GAMEOVER'; 
                         bgMusic.pause();
