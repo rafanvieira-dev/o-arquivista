@@ -29,28 +29,32 @@ function fetchRecordes() {
 fetchRecordes(); 
 
 function salvarProgresso(completedLevel = currentLevel) {
-    if (saveInProgress) return;
-    saveInProgress = true;
+    const playerName = localStorage.getItem("arquivista_nome") || "Anônimo";
+    const pontuacaoRegistrada = Number(score) || 0;
     const faseRegistrada = Math.max(1, Math.min(MAX_LEVELS, completedLevel));
-    let playerName = localStorage.getItem("arquivista_nome") || "Anônimo";
-    
-    db.collection("recordes").doc(playerName).get().then((docSnapshot) => {
-        let melhorPontuacao = score;
-        let melhorFase = faseRegistrada;
-        
-        if (docSnapshot.exists) {
-            let dados = docSnapshot.data();
-            if (dados.pontuacao > score) melhorPontuacao = dados.pontuacao;
-            if (dados.fase_alcancada > faseRegistrada) melhorFase = Math.min(MAX_LEVELS, dados.fase_alcancada);
-        }
 
-        db.collection("recordes").doc(playerName).set({
-            nome: playerName,
-            fase_alcancada: melhorFase,
-            pontuacao: melhorPontuacao,
-            ultima_partida: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true }).then(() => fetchRecordes()).catch(err => console.error('Falha ao salvar progresso:', err)).finally(() => { saveInProgress = false; });
-    }).catch(err => { console.error('Falha ao consultar progresso:', err); saveInProgress = false; });
+    // Serializa os salvamentos para não perder uma atualização que chegue em seguida.
+    saveQueue = saveQueue.then(() => {
+        return db.collection("recordes").doc(playerName).get().then((docSnapshot) => {
+            const dados = docSnapshot.exists ? docSnapshot.data() : {};
+            const melhorPontuacao = Math.max(Number(dados.pontuacao) || 0, pontuacaoRegistrada);
+            const melhorFase = Math.max(
+                Math.min(MAX_LEVELS, Number(dados.fase_alcancada) || 1),
+                faseRegistrada
+            );
+
+            return db.collection("recordes").doc(playerName).set({
+                nome: playerName,
+                fase_alcancada: melhorFase,
+                pontuacao: melhorPontuacao,
+                ultima_partida: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+        }).then(() => fetchRecordes());
+    }).catch(err => {
+        console.error("Não foi possível salvar o progresso:", err);
+    });
+
+    return saveQueue;
 }
 
 const canvas = document.getElementById('gameCanvas');
@@ -82,7 +86,7 @@ let levelData = {};
 let keys = { left: false, right: false, up: false };
 let jumpJustPressed = false; let lastTime = 0;
 let invincibleUntil = 0;
-let saveInProgress = false;
+let saveQueue = Promise.resolve();
 
 window.addEventListener('keydown', e => {
     if (['ArrowLeft','ArrowRight','ArrowUp','Space'].includes(e.code)) e.preventDefault();
