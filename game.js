@@ -63,8 +63,8 @@ const assets = {
     bg: new Image(), arm: new Image(), doc: new Image(),
     flavio: new Image(), rosale: new Image(), eliezer: new Image(), igorgak: new Image()
 };
-assets.arm.src = 'assets/sprites/armario.png';
-assets.doc.src = 'assets/sprites/documento.png';
+assets.arm.src = 'assets/sprites/armario-modern.svg';
+assets.doc.src = 'assets/sprites/documento-modern.svg';
 assets.flavio.src = 'assets/sprites/flavio.png';
 assets.rosale.src = 'assets/sprites/rosale.png';
 assets.eliezer.src = 'assets/sprites/eliezer.png';
