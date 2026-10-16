@@ -28,17 +28,20 @@ function fetchRecordes() {
 }
 fetchRecordes(); 
 
-function salvarProgresso() {
+function salvarProgresso(completedLevel = currentLevel) {
+    if (saveInProgress) return;
+    saveInProgress = true;
+    const faseRegistrada = Math.max(1, Math.min(MAX_LEVELS, completedLevel));
     let playerName = localStorage.getItem("arquivista_nome") || "Anônimo";
     
     db.collection("recordes").doc(playerName).get().then((docSnapshot) => {
         let melhorPontuacao = score;
-        let melhorFase = currentLevel;
+        let melhorFase = faseRegistrada;
         
         if (docSnapshot.exists) {
             let dados = docSnapshot.data();
             if (dados.pontuacao > score) melhorPontuacao = dados.pontuacao;
-            if (dados.fase_alcancada > currentLevel) melhorFase = dados.fase_alcancada;
+            if (dados.fase_alcancada > faseRegistrada) melhorFase = Math.min(MAX_LEVELS, dados.fase_alcancada);
         }
 
         db.collection("recordes").doc(playerName).set({
@@ -46,8 +49,8 @@ function salvarProgresso() {
             fase_alcancada: melhorFase,
             pontuacao: melhorPontuacao,
             ultima_partida: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true }).then(() => fetchRecordes());
-    });
+        }, { merge: true }).then(() => fetchRecordes()).catch(err => console.error('Falha ao salvar progresso:', err)).finally(() => { saveInProgress = false; });
+    }).catch(err => { console.error('Falha ao consultar progresso:', err); saveInProgress = false; });
 }
 
 const canvas = document.getElementById('gameCanvas');
@@ -78,11 +81,14 @@ let levelData = {};
 
 let keys = { left: false, right: false, up: false };
 let jumpJustPressed = false; let lastTime = 0;
+let invincibleUntil = 0;
+let saveInProgress = false;
 
 window.addEventListener('keydown', e => {
-    if (e.code === 'ArrowLeft') keys.left = true;
-    if (e.code === 'ArrowRight') keys.right = true;
-    if (e.code === 'Space') { if (!keys.up) jumpJustPressed = true; keys.up = true; }
+    if (['ArrowLeft','ArrowRight','ArrowUp','Space'].includes(e.code)) e.preventDefault();
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
+    if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') { if (!keys.up) jumpJustPressed = true; keys.up = true; }
     
     if (e.code === 'Enter') {
         if (gameState === 'PLAYING' && player.canExit) {
@@ -95,9 +101,9 @@ window.addEventListener('keydown', e => {
     }
 });
 window.addEventListener('keyup', e => {
-    if (e.code === 'ArrowLeft') keys.left = false;
-    if (e.code === 'ArrowRight') keys.right = false;
-    if (e.code === 'Space') keys.up = false;
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+    if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') keys.up = false;
 });
 
 function iniciarComNome() {
@@ -127,7 +133,7 @@ function handleTouch(e) {
         return;
     }
     
-    if (gameState === 'PLAYING' && player.canExit && e.type === 'touchstart') {
+    if (gameState === 'PLAYING' && player && player.canExit && e.type === 'touchstart') {
         gameState = 'LEVEL_CLEAR';
         bgMusic.pause();
         salvarProgresso();
@@ -164,6 +170,9 @@ function initLevel(lvl) {
     
     player = new Player(100, 300);
     player.canExit = false;
+    invincibleUntil = 0;
+    keys = { left: false, right: false, up: false };
+    jumpJustPressed = false;
     cameraX = 0; timer = levelData.timeLimit; timerAccumulator = 0;
     gameState = 'PLAYING';
     
@@ -179,14 +188,14 @@ function resetGame() {
 }
 
 function nextLevel() {
-    currentLevel++;
-    if (currentLevel > MAX_LEVELS) {
+    const completedLevel = currentLevel;
+    salvarProgresso(completedLevel);
+    if (currentLevel >= MAX_LEVELS) {
         gameState = 'GAME_COMPLETED';
         bgMusic.pause();
-        salvarProgresso();
     } else {
+        currentLevel++;
         initLevel(currentLevel);
-        salvarProgresso();
     }
 }
 
@@ -200,8 +209,8 @@ function isColliding(a, b) {
     return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
 
-function applyPhysics() {
-    player.x += player.vx;
+function applyPhysics(frameScale) {
+    player.x += player.vx * frameScale;
     if (player.x < 0) player.x = 0; 
     levelData.platforms.forEach(p => {
         if (isColliding(player, p)) {
@@ -210,7 +219,7 @@ function applyPhysics() {
         }
     });
 
-    player.y += player.vy;
+    player.y += player.vy * frameScale;
     player.grounded = false;
     levelData.platforms.forEach(p => {
         if (isColliding(player, p)) {
@@ -221,13 +230,15 @@ function applyPhysics() {
 }
 
 function gameLoop(timeStamp) {
-    let deltaTime = timeStamp - lastTime; lastTime = timeStamp;
+    const deltaTime = lastTime === 0 ? 16.667 : Math.min(timeStamp - lastTime, 40);
+    lastTime = timeStamp;
+    const frameScale = deltaTime / 16.667;
     titleElement.style.display = (gameState === 'START') ? 'block' : 'none';
 
     if (gameState === 'PLAYING') {
         timerAccumulator += deltaTime;
-        if (timerAccumulator >= 1000) { 
-            timer--; updateHUD(); timerAccumulator = 0; 
+        while (timerAccumulator >= 1000 && timer > 0) { 
+            timer--; timerAccumulator -= 1000; updateHUD(); 
             if (timer <= 0) { 
                 gameState = 'GAMEOVER'; 
                 bgMusic.pause();
@@ -235,8 +246,9 @@ function gameLoop(timeStamp) {
             }
         }
 
+        if (player.invincible && timeStamp >= invincibleUntil) player.invincible = false;
         player.update(keys, deltaTime, jumpJustPressed); jumpJustPressed = false;
-        applyPhysics();
+        applyPhysics(frameScale);
         
         levelData.enemies.forEach(e => e.update(deltaTime));
         levelData.flyingEnemies.forEach(e => e.update(deltaTime));
@@ -253,7 +265,7 @@ function gameLoop(timeStamp) {
                 if (!player.invincible) {
                     health--; updateHUD(); 
                     player.invincible = true;
-                    setTimeout(() => player.invincible = false, 1500); 
+                    invincibleUntil = timeStamp + 1500; 
                     if (health <= 0) { 
                         gameState = 'GAMEOVER'; 
                         bgMusic.pause();
