@@ -28,26 +28,33 @@ function fetchRecordes() {
 }
 fetchRecordes(); 
 
-function salvarProgresso() {
-    let playerName = localStorage.getItem("arquivista_nome") || "Anônimo";
-    
-    db.collection("recordes").doc(playerName).get().then((docSnapshot) => {
-        let melhorPontuacao = score;
-        let melhorFase = currentLevel;
-        
-        if (docSnapshot.exists) {
-            let dados = docSnapshot.data();
-            if (dados.pontuacao > score) melhorPontuacao = dados.pontuacao;
-            if (dados.fase_alcancada > currentLevel) melhorFase = dados.fase_alcancada;
-        }
+function salvarProgresso(completedLevel = currentLevel) {
+    const playerName = localStorage.getItem("arquivista_nome") || "Anônimo";
+    const pontuacaoRegistrada = Number(score) || 0;
+    const faseRegistrada = Math.max(1, Math.min(MAX_LEVELS, completedLevel));
 
-        db.collection("recordes").doc(playerName).set({
-            nome: playerName,
-            fase_alcancada: melhorFase,
-            pontuacao: melhorPontuacao,
-            ultima_partida: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true }).then(() => fetchRecordes());
+    // Serializa os salvamentos para não perder uma atualização que chegue em seguida.
+    saveQueue = saveQueue.then(() => {
+        return db.collection("recordes").doc(playerName).get().then((docSnapshot) => {
+            const dados = docSnapshot.exists ? docSnapshot.data() : {};
+            const melhorPontuacao = Math.max(Number(dados.pontuacao) || 0, pontuacaoRegistrada);
+            const melhorFase = Math.max(
+                Math.min(MAX_LEVELS, Number(dados.fase_alcancada) || 1),
+                faseRegistrada
+            );
+
+            return db.collection("recordes").doc(playerName).set({
+                nome: playerName,
+                fase_alcancada: melhorFase,
+                pontuacao: melhorPontuacao,
+                ultima_partida: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+        }).then(() => fetchRecordes());
+    }).catch(err => {
+        console.error("Não foi possível salvar o progresso:", err);
     });
+
+    return saveQueue;
 }
 
 const canvas = document.getElementById('gameCanvas');
@@ -63,8 +70,9 @@ const assets = {
     bg: new Image(), arm: new Image(), doc: new Image(),
     flavio: new Image(), rosale: new Image(), eliezer: new Image(), igorgak: new Image()
 };
-assets.arm.src = 'assets/sprites/armario.png';
-assets.doc.src = 'assets/sprites/documento.png';
+assets.bg.src = 'assets/sprites/fundo1.svg';
+assets.arm.src = 'assets/sprites/armario-modern.svg';
+assets.doc.src = 'assets/sprites/documento-modern.svg';
 assets.flavio.src = 'assets/sprites/flavio.png';
 assets.rosale.src = 'assets/sprites/rosale.png';
 assets.eliezer.src = 'assets/sprites/eliezer.png';
@@ -77,11 +85,14 @@ let levelData = {};
 
 let keys = { left: false, right: false, up: false };
 let jumpJustPressed = false; let lastTime = 0;
+let invincibleUntil = 0;
+let saveQueue = Promise.resolve();
 
 window.addEventListener('keydown', e => {
-    if (e.code === 'ArrowLeft') keys.left = true;
-    if (e.code === 'ArrowRight') keys.right = true;
-    if (e.code === 'Space') { if (!keys.up) jumpJustPressed = true; keys.up = true; }
+    if (['ArrowLeft','ArrowRight','ArrowUp','Space'].includes(e.code)) e.preventDefault();
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
+    if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') { if (!keys.up) jumpJustPressed = true; keys.up = true; }
     
     if (e.code === 'Enter') {
         if (gameState === 'PLAYING' && player.canExit) {
@@ -94,9 +105,9 @@ window.addEventListener('keydown', e => {
     }
 });
 window.addEventListener('keyup', e => {
-    if (e.code === 'ArrowLeft') keys.left = false;
-    if (e.code === 'ArrowRight') keys.right = false;
-    if (e.code === 'Space') keys.up = false;
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+    if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') keys.up = false;
 });
 
 function iniciarComNome() {
@@ -126,7 +137,7 @@ function handleTouch(e) {
         return;
     }
     
-    if (gameState === 'PLAYING' && player.canExit && e.type === 'touchstart') {
+    if (gameState === 'PLAYING' && player && player.canExit && e.type === 'touchstart') {
         gameState = 'LEVEL_CLEAR';
         bgMusic.pause();
         salvarProgresso();
@@ -163,6 +174,9 @@ function initLevel(lvl) {
     
     player = new Player(100, 300);
     player.canExit = false;
+    invincibleUntil = 0;
+    keys = { left: false, right: false, up: false };
+    jumpJustPressed = false;
     cameraX = 0; timer = levelData.timeLimit; timerAccumulator = 0;
     gameState = 'PLAYING';
     
@@ -178,14 +192,14 @@ function resetGame() {
 }
 
 function nextLevel() {
-    currentLevel++;
-    if (currentLevel > MAX_LEVELS) {
+    const completedLevel = currentLevel;
+    salvarProgresso(completedLevel);
+    if (currentLevel >= MAX_LEVELS) {
         gameState = 'GAME_COMPLETED';
         bgMusic.pause();
-        salvarProgresso();
     } else {
+        currentLevel++;
         initLevel(currentLevel);
-        salvarProgresso();
     }
 }
 
@@ -199,8 +213,8 @@ function isColliding(a, b) {
     return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
 
-function applyPhysics() {
-    player.x += player.vx;
+function applyPhysics(frameScale) {
+    player.x += player.vx * frameScale;
     if (player.x < 0) player.x = 0; 
     levelData.platforms.forEach(p => {
         if (isColliding(player, p)) {
@@ -209,7 +223,7 @@ function applyPhysics() {
         }
     });
 
-    player.y += player.vy;
+    player.y += player.vy * frameScale;
     player.grounded = false;
     levelData.platforms.forEach(p => {
         if (isColliding(player, p)) {
@@ -220,13 +234,15 @@ function applyPhysics() {
 }
 
 function gameLoop(timeStamp) {
-    let deltaTime = timeStamp - lastTime; lastTime = timeStamp;
+    const deltaTime = lastTime === 0 ? 16.667 : Math.min(timeStamp - lastTime, 40);
+    lastTime = timeStamp;
+    const frameScale = deltaTime / 16.667;
     titleElement.style.display = (gameState === 'START') ? 'block' : 'none';
 
     if (gameState === 'PLAYING') {
         timerAccumulator += deltaTime;
-        if (timerAccumulator >= 1000) { 
-            timer--; updateHUD(); timerAccumulator = 0; 
+        while (timerAccumulator >= 1000 && timer > 0) { 
+            timer--; timerAccumulator -= 1000; updateHUD(); 
             if (timer <= 0) { 
                 gameState = 'GAMEOVER'; 
                 bgMusic.pause();
@@ -234,8 +250,9 @@ function gameLoop(timeStamp) {
             }
         }
 
+        if (player.invincible && timeStamp >= invincibleUntil) player.invincible = false;
         player.update(keys, deltaTime, jumpJustPressed); jumpJustPressed = false;
-        applyPhysics();
+        applyPhysics(frameScale);
         
         levelData.enemies.forEach(e => e.update(deltaTime));
         levelData.flyingEnemies.forEach(e => e.update(deltaTime));
@@ -252,7 +269,7 @@ function gameLoop(timeStamp) {
                 if (!player.invincible) {
                     health--; updateHUD(); 
                     player.invincible = true;
-                    setTimeout(() => player.invincible = false, 1500); 
+                    invincibleUntil = timeStamp + 1500; 
                     if (health <= 0) { 
                         gameState = 'GAMEOVER'; 
                         bgMusic.pause();
@@ -268,7 +285,7 @@ function gameLoop(timeStamp) {
                 if (!player.invincible) {
                     health--; updateHUD(); 
                     player.invincible = true;
-                    setTimeout(() => player.invincible = false, 1500); 
+                    invincibleUntil = timeStamp + 1500; 
                     if (health <= 0) { 
                         gameState = 'GAMEOVER'; 
                         bgMusic.pause();
@@ -337,7 +354,13 @@ function gameLoop(timeStamp) {
         player.draw(ctx, cameraX);
 
     } else {
-        ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0,0,800,600);
+        if (assets.bg.complete && assets.bg.naturalWidth > 0) {
+            ctx.drawImage(assets.bg, 0, 0, 800, 600);
+        } else {
+            ctx.fillStyle = '#0b1727';
+            ctx.fillRect(0, 0, 800, 600);
+        }
+        ctx.fillStyle = "rgba(3,10,20,0.78)"; ctx.fillRect(0,0,800,600);
         ctx.textAlign = "center"; 
         
         if (gameState === 'START') {

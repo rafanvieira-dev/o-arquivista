@@ -1,11 +1,11 @@
 const FLOOR_Y = 582; 
 
 function generateLevel(levelNumber) {
-    const bgW = 941; 
+    const bgW = 800; 
     const numChunks = 2 + levelNumber; 
     const levelLength = numChunks * bgW; 
     
-    let backgroundToUse = `assets/sprites/fundo${((levelNumber - 1) % 10) + 1}.png`;
+    let backgroundToUse = `assets/sprites/fundo${((levelNumber - 1) % 10) + 1}.svg`;
     
     let platforms = [{ x: 0, y: FLOOR_Y, width: levelLength + 800, height: 40, type: 'chao_invisivel' }];
     let items = [];

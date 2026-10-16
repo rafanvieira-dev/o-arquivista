@@ -1,28 +1,27 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>O Arquivista</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#07111f">
+    <meta name="description" content="O Arquivista — uma aventura de plataforma em pixel art pelo universo dos arquivos e documentos.">
+    <title>O Arquivista | Aventura em Pixel Art</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game-wrapper">
+    <main id="game-wrapper" aria-label="Jogo O Arquivista">
         <h1 id="game-title">O ARQUIVISTA</h1>
-        
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-        
-        <div id="ui">
-            <span id="levelDisplay" style="color: #3498db;">Nível: 1</span>
+        <canvas id="gameCanvas" width="800" height="600" aria-label="Área de jogo. Use as setas para andar e espaço para pular."></canvas>
+        <div id="ui" aria-live="polite">
+            <span id="levelDisplay">Nível: 1</span>
             <span id="scoreDisplay">Pontuação: 0</span>
-            <span id="timerDisplay" style="color: #f1c40f;">Tempo: 0</span>
+            <span id="timerDisplay">Tempo: 0</span>
             <span id="healthDisplay">Vidas: ❤️❤️❤️</span>
         </div>
-    </div>
+    </main>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
     <script src="enemies.js"></script>
     <script src="level.js"></script>
     <script src="player.js"></script>
