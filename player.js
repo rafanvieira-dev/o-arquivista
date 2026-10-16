@@ -16,7 +16,7 @@ class Player {
         this.maxJumps = 2;
 
         this.image = new Image();
-        this.image.src = 'assets/sprites/arquivista.png';
+        this.image.src = 'assets/sprites/arquivista-v2.svg';
         this.frameX = 1;
         this.frameY = 0;
         this.frameTimer = 0;
@@ -73,10 +73,10 @@ class Player {
         const sY = Math.floor(this.frameY * cellH + trimY);
         const sW = Math.floor(cellW - trimX * 2);
         const sH = Math.floor(cellH - trimY * 2);
-        const drawW = 95;
-        const drawH = 95;
+        const drawW = 88;
+        const drawH = 88;
         const drawX = this.x - cameraX - (drawW - this.width) / 2;
-        const drawY = this.y - (drawH - this.height) + 18;
+        const drawY = this.y - (drawH - this.height) + 12;
 
         ctx.save();
         if (this.facing === -1) {
