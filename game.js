@@ -88,21 +88,25 @@ let jumpJustPressed = false; let lastTime = 0;
 let invincibleUntil = 0;
 let saveQueue = Promise.resolve();
 
-window.addEventListener('keydown', e => {
-    if (['ArrowLeft','ArrowRight','ArrowUp','Space'].includes(e.code)) e.preventDefault();
-    if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
-    if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
-    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') { if (!keys.up) jumpJustPressed = true; keys.up = true; }
-    
-    if (e.code === 'Enter') {
-        if (gameState === 'PLAYING' && player.canExit) {
-            gameState = 'LEVEL_CLEAR';
-            bgMusic.pause();
-            salvarProgresso();
-        } else {
-            checkMenuProgression();
-        }
+function handleKeyDown(e) {
+    const code = e.code || ({ "Enter": "Enter", " ": "Space", "ArrowLeft": "ArrowLeft", "ArrowRight": "ArrowRight", "ArrowUp": "ArrowUp" }[e.key] || "");
+    if (['ArrowLeft','ArrowRight','ArrowUp','Space'].includes(code)) e.preventDefault();
+    if (code === 'ArrowLeft' || code === 'KeyA') keys.left = true;
+    if (code === 'ArrowRight' || code === 'KeyD') keys.right = true;
+    if (code === 'Space' || code === 'ArrowUp' || code === 'KeyW') {
+        if (!keys.up) jumpJustPressed = true;
+        keys.up = true;
     }
+    if (code === 'Enter' || e.key === 'Enter') {
+        e.preventDefault();
+        checkMenuProgression();
+    }
+}
+window.addEventListener('keydown', handleKeyDown);
+
+// Clique inicia/avança quando o jogo está em uma tela de menu.
+canvas.addEventListener('click', () => {
+    if (gameState !== 'PLAYING') checkMenuProgression();
 });
 window.addEventListener('keyup', e => {
     if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
